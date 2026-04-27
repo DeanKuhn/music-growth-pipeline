@@ -1,46 +1,18 @@
-"""
-audit_script.py — Last.fm API Endpoint Audit
-=============================================
-Purpose: Before writing any pipeline code, verify that the three Last.fm
-endpoints we're planning to use actually return the data we need, at the
-granularity we need it. This is a read-only exploration script — it writes
-nothing to a database.
-
-Run with:
-    python audit_script.py
-
-Requirements:
-    pip install requests python-dotenv
-"""
+# audit_script.py - Last.fm API Endpoint Audit
+# ============================================
+# Purpose: To ensure that Last.fm's endpoints provide the pipeline with the
+# data it will need
 
 import os
 import json
 from dotenv import load_dotenv
 import requests
 
-# ---------------------------------------------------------------------------
-# HOW API KEYS WORK (the big picture)
-# ---------------------------------------------------------------------------
-# An API key is just a long random string that the API provider (Last.fm)
-# gave you when you registered. It works like a username: every request you
-# send includes it so Last.fm knows who is asking.
-#
-# Last.fm's API is "read-only key auth" — meaning:
-#   - You don't need to log in as a user (no OAuth dance).
-#   - You just append &api_key=YOUR_KEY to every URL.
-#   - Last.fm looks up your key in their database, checks your rate limits,
-#     and returns data.
-#
-# WHY NOT HARDCODE THE KEY IN THIS FILE?
-#   If you commit a file with your key in it, it's permanently in git history
-#   and anyone who clones your repo can read it. API keys for free-tier
-#   services get scraped and abused within hours.
-#
-#   The safe pattern: store the key in a .env file (which .gitignore excludes),
-#   then load it into the environment at runtime with python-dotenv.
-# ---------------------------------------------------------------------------
+# API key is appended to the end of every URL like &api_key=MY_API_KEY
+# In order to avoid API key exposure, it is stored in .env and accessed via
+# load_dotenv() (this loads .env in current directory and sets env variables)
 
-load_dotenv()  # reads .env in the current directory and sets environment vars
+load_dotenv()
 API_KEY = os.getenv("LASTFM_API_KEY")
 
 if not API_KEY:
@@ -49,31 +21,17 @@ if not API_KEY:
         "Copy .env.example to .env and paste your key in there."
     )
 
-# ---------------------------------------------------------------------------
-# HOW HTTP REQUESTS WORK
-# ---------------------------------------------------------------------------
-# When your browser visits a webpage it sends an HTTP GET request to a server.
-# The `requests` library lets Python do the same thing programmatically.
-#
-# A Last.fm API URL looks like:
-#   http://ws.audioscrobbler.com/2.0/?method=artist.getInfo&artist=Arca&api_key=...&format=json
-#
-# Breaking that down:
-#   - Base URL: http://ws.audioscrobbler.com/2.0/
-#   - Query parameters (everything after '?'):
-#       method=artist.getInfo   ← which endpoint to call
-#       artist=Arca             ← the input argument
-#       api_key=...             ← your credential
-#       format=json             ← ask for JSON instead of XML (the default)
-#
-# `requests.get(url, params=dict)` builds that URL for you — you pass the
-# parameters as a Python dict and it handles URL-encoding (spaces → %20, etc.)
-# ---------------------------------------------------------------------------
+# Example URL:
+# http://ws.audioscrobbler.com/2.0/
+# ?method=artist.getInfo
+# &artist=Arca
+# &api_key=...
+# &format=json
 
+# Base URL all our endpoints will use
 BASE_URL = "http://ws.audioscrobbler.com/2.0/"
 
-# Shared params included in every request.
-# We'll merge these with endpoint-specific params using ** unpacking.
+# Shared params in most requests
 COMMON_PARAMS = {
     "api_key": API_KEY,
     "format": "json",
@@ -81,30 +39,18 @@ COMMON_PARAMS = {
 
 
 def get(params: dict) -> dict:
-    """
-    Make a GET request to the Last.fm API and return the parsed JSON.
+    # {**COMMON_PARAMS, **params} merges two dicts; params wins on conflicts
+    response = \
+        requests.get(BASE_URL, params={**COMMON_PARAMS, **params}, timeout=10)
 
-    All Last.fm endpoints live at the same base URL; you select the endpoint
-    with the 'method' parameter. This helper merges in the key and format so
-    callers don't have to repeat them.
-
-    Raises an exception if the HTTP request itself fails (network error,
-    server 500, etc.). Last.fm also returns errors *inside* a 200 response
-    (e.g. {"error": 6, "message": "Artist not found"}) — we surface those too.
-    """
-    # {**COMMON_PARAMS, **params} merges two dicts; params wins on conflicts.
-    response = requests.get(BASE_URL, params={**COMMON_PARAMS, **params}, timeout=10)
-
-    # raise_for_status() turns any HTTP 4xx/5xx response into a Python exception.
-    # A 200 response does nothing here and execution continues normally.
+    # raise_for_status() turns any HTTP 400-599 response into an exception
     response.raise_for_status()
 
     data = response.json()
 
-    # Last.fm returns HTTP 200 even for application-level errors, so we check
-    # the payload itself for an "error" key.
+    # After response, double check for 200 responses with error messages
     if "error" in data:
-        raise ValueError(f"Last.fm error {data['error']}: {data['message']}")
+        raise ValueError(f"Last.fm error {data["error"]}: {data["message"]}")
 
     return data
 
@@ -115,25 +61,10 @@ def section(title: str):
     print(f"{'=' * 60}")
 
 
-# ---------------------------------------------------------------------------
-# AUDIT 1: artist.getInfo
-# ---------------------------------------------------------------------------
-# Key questions:
-#   - Does it return listener count and total play count?
-#   - Are those numbers per-week or all-time totals?
-#   - Is there enough info to identify "small" vs "large" artists?
-#
-# Spoiler from the docs: listeners and playcount are all-time cumulative
-# totals, not time-series. To get longitudinal data we'd need to call this
-# endpoint repeatedly over time and store snapshots — that's exactly what
-# the artist_snapshots table is designed for.
-# ---------------------------------------------------------------------------
-
 def audit_artist_get_info():
     section("AUDIT 1: artist.getInfo")
 
-    # We test with one "small" and one "large" artist so we can compare the
-    # shape of the response and see what fields actually differ.
+    # Test with a smaller and larger artist
     test_artists = ["Arca", "Taylor Swift"]
 
     for artist_name in test_artists:
@@ -142,7 +73,7 @@ def audit_artist_get_info():
 
         artist = data["artist"]
 
-        # The stats block is the most important part for our project.
+        # The stats block is the most important part for our project
         stats = artist.get("stats", {})
         listeners = stats.get("listeners", "NOT PRESENT")
         playcount = stats.get("playcount", "NOT PRESENT")
@@ -150,11 +81,11 @@ def audit_artist_get_info():
         print(f"  listeners : {listeners}")
         print(f"  playcount : {playcount}")
 
-        # Tags tell us genre — useful if we want to filter by genre later.
+        # Tags tell us genre, useful if we want to filter by genre later
         tags = [t["name"] for t in artist.get("tags", {}).get("tag", [])]
         print(f"  top tags  : {tags}")
 
-        # bio summary often has useful metadata
+        # Bio summary often has useful metadata
         bio = artist.get("bio", {}).get("summary", "")
         print(f"  bio chars : {len(bio)} (truncated)")
 
@@ -163,30 +94,17 @@ def audit_artist_get_info():
     print("This is feasible — it's the core pattern of artist_snapshots.")
 
 
-# ---------------------------------------------------------------------------
-# AUDIT 2: chart.getTopArtists
-# ---------------------------------------------------------------------------
-# Key questions:
-#   - What does "chart" mean here — is there a date range?
-#   - How many artists are returned? Is it paginated?
-#   - Can we go back in time, or is it always the current week?
-#
-# This endpoint returns *current* chart standings (top artists globally right
-# now). It does NOT let you query past charts. For historical chart data we
-# need artist.getWeeklyChartList (audit 3).
-# ---------------------------------------------------------------------------
-
 def audit_chart_get_top_artists():
     section("AUDIT 2: chart.getTopArtists")
 
-    # limit controls how many results per page; page lets you paginate.
+    # Limit controls how many results per page; page lets you paginate
     data = get({"method": "chart.getTopArtists", "limit": 5, "page": 1})
 
     chart = data.get("artists", {})
     artists = chart.get("artist", [])
 
-    # The @attr block contains pagination metadata — important for deciding
-    # how deep we can realistically scrape.
+    # The @attr block contains pagination metadata, important for deciding
+    # how deep we can realistically scrape
     attr = chart.get("@attr", {})
     print(f"\n  Total artists available : {attr.get('total', 'unknown')}")
     print(f"  Current page            : {attr.get('page', 'unknown')}")
@@ -201,25 +119,6 @@ def audit_chart_get_top_artists():
     print("No date parameter exists — you cannot query past chart snapshots here.")
     print("For historical chart data, use chart.getWeeklyChartList (audit 3).")
 
-
-# ---------------------------------------------------------------------------
-# AUDIT 3: chart.getWeeklyChartList  +  user.getWeeklyArtistChart
-# ---------------------------------------------------------------------------
-# Key questions:
-#   - Does Last.fm expose historical *global* weekly charts?
-#   - How far back does the data go?
-#   - What granularity / format are the timestamps in?
-#
-# IMPORTANT NOTE: There is no "chart.getWeeklyChartList" — that endpoint
-# applies to *user* listening history, not global charts. The correct call for
-# global weekly chart history is user.getWeeklyArtistChart on a specific user,
-# or we use chart.getTopArtists repeatedly. We test both patterns here so we
-# know exactly what's available.
-#
-# Last.fm's "charts" API is historically user-centric (it grew out of
-# Audioscrobbler, a personal scrobbling service). Global chart data is more
-# limited than per-user data.
-# ---------------------------------------------------------------------------
 
 def audit_weekly_chart():
     section("AUDIT 3: Weekly Chart History")
@@ -236,9 +135,11 @@ def audit_weekly_chart():
 
     import datetime
 
+
+    # Converts epoch to readable time
     def ts(unix_str):
-        # Unix timestamp = seconds since 1970-01-01 UTC. Convert to readable date.
-        return datetime.datetime.fromtimestamp(int(unix_str), datetime.timezone.utc).strftime("%Y-%m-%d")
+        return datetime.datetime.fromtimestamp(
+            int(unix_str), datetime.timezone.utc).strftime("%Y-%m-%d")
 
     if charts:
         oldest = charts[0]
@@ -275,10 +176,7 @@ def audit_weekly_chart():
     print("  -> After N weeks of collection, we have our time series")
 
 
-# ---------------------------------------------------------------------------
 # MAIN — run all three audits and print a summary
-# ---------------------------------------------------------------------------
-
 def main():
     print("Last.fm API Audit — music-growth-pipeline")
     print("Running three endpoint checks. Each section prints raw findings.")
