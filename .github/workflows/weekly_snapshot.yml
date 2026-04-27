@@ -1,0 +1,28 @@
+name: Weekly Artist Snapshot
+
+on:
+  schedule:
+    - cron: "0 9 * * 0"  # every Sunday at 9am UTC
+  workflow_dispatch:       # allows manual trigger from GitHub UI
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run snapshot
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python snapshot_artists.py

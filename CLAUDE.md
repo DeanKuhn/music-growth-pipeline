@@ -7,46 +7,70 @@ Analyze whether chart appearances correlate with listener count growth for small
 | Layer | Tool |
 |---|---|
 | Ingestion & transformation | Python |
-| Primary storage | Postgres |
-| Analytical queries | DuckDB (optional layer) |
+| Primary storage | Postgres (cloud: Neon) |
+| Analytical queries | SQL (analysis.sql) |
 | Data source | Last.fm API (key auth, read-only) |
+| Automation | GitHub Actions (weekly cron) |
 
 ## Status Tracker
 | Item | Status |
 |---|---|
 | Last.fm account + API key | Done |
-| GitHub repo (music-growth-pipeline) | Done |
-| Virtual environment (.venv) | Done |
+| GitHub repo | Done |
+| Virtual environment (.venv, WSL) | Done |
 | API audit (audit_script.py) | Done |
-| Schema design | Next |
-| Ingestion pipeline | Pending |
-| Transformation layer | Pending |
-| Analytical queries | Pending |
+| Schema design (schema.sql) | Done |
+| Artist seeder (seed_artists.py) | Done |
+| Snapshot job (snapshot_artists.py) | Done |
+| Cross-sectional analysis (analysis.sql) | Done |
+| GitHub Actions weekly automation | Done |
+| Longitudinal analysis | Pending (needs weeks of snapshots) |
+
+## Environment
+- Python runs in WSL (.venv), not Windows PowerShell
+- Database is hosted on Neon (cloud Postgres) — connection string in .env as DATABASE_URL
+- API key stored in .env as LASTFM_API_KEY
+- Both secrets are also stored as GitHub Actions secrets for the automated workflow
+
+## File Guide
+| File | Purpose |
+|---|---|
+| `audit_script.py` | One-time API audit — documents what Last.fm endpoints return and why the pipeline is designed the way it is |
+| `schema.sql` | DDL for all four tables — run once to set up the database |
+| `seed_artists.py` | Seeds artists and weekly_charts from chart.getTopArtists. Accepts --start and --end page args (default 500-2000). Pages 1-50 already seeded as mainstream baseline. |
+| `snapshot_artists.py` | Calls artist.getInfo for each unseeded artist, inserts into artist_snapshots. Run weekly via GitHub Actions. |
+| `analysis.sql` | Three cross-sectional queries comparing mainstream (pages 1-50) vs indie (pages 500-2000) artists |
+| `.github/workflows/weekly_snapshot.yml` | GitHub Action — runs snapshot_artists.py every Sunday at 9am UTC |
+
+## Schema
+```
+artists              — artist metadata (name, mbid, created_at)
+weekly_charts        — chart appearance records (artist_id, rank, page, snapshot_date)
+artist_snapshots     — listener/playcount snapshots over time (artist_id, listeners, playcount, snapshot_date)
+tags                 — genre/tag associations (unused so far)
+```
 
 ## API Audit Findings
 - `artist.getInfo` — returns cumulative all-time listener + playcount. No time series built in; must snapshot repeatedly.
 - `chart.getTopArtists` — current global chart only (no historical date param). 10,000 artists, 2,000 pages. Deep pages = smaller/indie artists.
-- Weekly charts are per-user only (`user.getWeeklyArtistChart`), not global. Data goes back to 2005.
+- Weekly charts are per-user only (`user.getWeeklyArtistChart`), not global.
 
-## Planned Pipeline
-1. **Seed** `artists` table from `chart.getTopArtists` pages 500–2000 (targets smaller artists)
-2. **Weekly snapshot job**: call `artist.getInfo` per artist, insert row into `artist_snapshots` with timestamp
-3. **After N weeks**: run correlation analysis between chart rank and listener growth
+## Current Data
+- 7,755 artists total: 250 mainstream (pages 1-50) + 7,505 indie (pages 500-2000)
+- 7,751 artist snapshots taken 2026-04-27
+- Longitudinal data collection started 2026-04-27 — weekly snapshots accumulating via GitHub Actions
 
-## MVP (immediately viable)
-Cross-sectional analysis: do chart-featured artists have statistically different listener distributions than non-featured ones? Doable with a single snapshot — no waiting required. Build this first while longitudinal data accumulates.
+## Cross-Sectional Findings (2026-04-27)
+- Mainstream artists average 3.6M listeners vs indie 348K (~10x)
+- Plays-per-listener ratio: mainstream median 74.76 vs indie 17.69 (~4x gap, consistent across full distribution)
+- Listener count distributions do not overlap — indie P90 (782K) is below mainstream P25 (2.3M)
+- Caveat: mainstream artists have older catalogues, so accumulated playcounts may partly explain the ratio gap
 
-## Planned Schema
-```
-artists              — artist metadata (name, mbid, tags)
-weekly_charts        — chart appearance records (rank, page, snapshot date)
-artist_snapshots     — longitudinal listener/playcount over time
-tags                 — (optional) genre/tag associations
-```
-Schema design comes before any pipeline code.
-
-## Backup Plan
-If longitudinal data proves too coarse: pivot fully to cross-sectional analysis (the MVP above).
+## Longitudinal Analysis Plan
+After several weeks of weekly snapshots:
+- Compare listener growth rates by chart page tier
+- Correlate chart rank with week-over-week listener change
+- Identify fastest-growing artists in the indie tier
 
 ## Portfolio Context
 - Companion projects: WGU-DSAII-Project (TSP/genetic algorithm), Market-Cynic-Pipeline (Yahoo Finance + Reddit sentiment)
