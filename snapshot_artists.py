@@ -39,9 +39,9 @@ def snapshot(conn, cur):
     cur.execute("""
         SELECT a.id, a.name, a.mbid
         FROM artists a
-        LEFT JOIN artist_snapshots s ON a.id = s.artist_id
+        LEFT JOIN artist_snapshots s ON a.id = s.artist_id AND s.snapshot_date = %s
         WHERE s.artist_id IS NULL
-    """)
+    """, (snapshot_date,))
     rows = cur.fetchall()
 
     for i, (artist_id, name, mbid) in enumerate(rows, start=1):

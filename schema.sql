@@ -1,10 +1,4 @@
-DROP TABLE IF EXISTS tags;
-DROP TABLE IF EXISTS artist_snapshots;
-DROP TABLE IF EXISTS weekly_charts;
-DROP TABLE IF EXISTS artists;
-
-
-CREATE TABLE artists (
+CREATE TABLE IF NOT EXISTS artists (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     mbid TEXT UNIQUE,
@@ -12,7 +6,7 @@ CREATE TABLE artists (
 );
 
 
-CREATE TABLE weekly_charts (
+CREATE TABLE IF NOT EXISTS weekly_charts (
     id SERIAL PRIMARY KEY,
     artist_id INTEGER NOT NULL,
     rank INTEGER NOT NULL,
@@ -22,7 +16,7 @@ CREATE TABLE weekly_charts (
 );
 
 
-CREATE TABLE artist_snapshots (
+CREATE TABLE IF NOT EXISTS artist_snapshots (
     id SERIAL PRIMARY KEY,
     artist_id INTEGER NOT NULL,
     listeners BIGINT NOT NULL,
@@ -33,11 +27,34 @@ CREATE TABLE artist_snapshots (
 );
 
 
-CREATE TABLE tags (
+CREATE TABLE IF NOT EXISTS artist_similarities (
     id SERIAL PRIMARY KEY,
     artist_id INTEGER NOT NULL,
-    tag TEXT NOT NULL,
-    tag_count INTEGER,
+    similar_artist_id INTEGER ,
+    similar_name TEXT NOT NULL,
+    similar_mbid TEXT,
+    similarity_score FLOAT NOT NULL,
+    fetched_at DATE NOT NULL,
     FOREIGN KEY (artist_id) REFERENCES artists(id),
-    UNIQUE (artist_id, tag)
+    FOREIGN KEY (similar_artist_id) REFERENCES artists(id),
+    UNIQUE (artist_id, similar_name)
+);
+
+
+CREATE TABLE IF NOT EXISTS genres (
+    id SERIAL PRIMARY KEY,
+    genre TEXT NOT NULL UNIQUE,
+    fetched_at DATE NOT NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS genre_artists (
+    id SERIAL PRIMARY KEY,
+    genre_id INTEGER NOT NULL,
+    artist_id INTEGER NOT NULL,
+    rank_in_genre INTEGER NOT NULL,
+    fetched_at DATE NOT NULL,
+    FOREIGN KEY (genre_id) REFERENCES genres(id),
+    FOREIGN KEY (artist_id) REFERENCES artists(id),
+    UNIQUE (genre_id, artist_id)
 );
