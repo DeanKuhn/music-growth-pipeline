@@ -1,0 +1,108 @@
+version: 2
+
+sources:
+  - name: public
+    database: neondb
+    schema: public
+    tables:
+      - name: artists
+        description: "Raw artist records seeded from Last.fm charts and genre/similarity scripts."
+        columns:
+          - name: id
+            description: "Primary key."
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: "Artist name as returned by Last.fm."
+            tests:
+              - not_null
+          - name: mbid
+            description: "MusicBrainz ID. Nullable — not all artists have one."
+          - name: created_at
+            description: "Timestamp when the artist was inserted."
+            tests:
+              - not_null
+
+      - name: artist_snapshots
+        description: "Weekly listener and playcount snapshots fetched via artist.getInfo."
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: artist_id
+            tests:
+              - not_null
+          - name: listeners
+            tests:
+              - not_null
+          - name: playcount
+            tests:
+              - not_null
+          - name: snapshot_date
+            tests:
+              - not_null
+
+      - name: weekly_charts
+        description: "Chart appearance records from chart.getTopArtists."
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: artist_id
+            tests:
+              - not_null
+          - name: rank
+            tests:
+              - not_null
+          - name: page
+            tests:
+              - not_null
+          - name: snapshot_date
+            tests:
+              - not_null
+
+      - name: artist_similarities
+        description: "Similar artist relationships fetched via artist.getSimilar."
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: artist_id
+            tests:
+              - not_null
+          - name: similar_name
+            tests:
+              - not_null
+          - name: similarity_score
+            tests:
+              - not_null
+
+      - name: genres
+        description: "Genre/tag list seeded from Last.fm tag.getTopArtists."
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: genre
+            tests:
+              - unique
+              - not_null
+
+      - name: genre_artists
+        description: "Artist-to-genre associations with rank within each genre."
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: genre_id
+            tests:
+              - not_null
+          - name: artist_id
+            tests:
+              - not_null
