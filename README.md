@@ -73,7 +73,9 @@ raw tables
                            stg_genre_artists, stg_artist_similarities
         ↓
     dbt mart models  →  artist_tiers, genre_stats,
-                        artist_similarity_network
+                        artist_similarity_network,
+                        listener_growth, artist_growth_summary,
+                        weekly_growth_by_tier, genre_growth
 ```
 
 ## dbt Models
@@ -87,6 +89,10 @@ raw tables
 | `artist_tiers` | Classifies each artist as `mainstream` (min chart page ≤ 50) or `indie` |
 | `genre_stats` | Per-genre summary: artist count, avg listeners, plays-per-listener ratio, mainstream vs indie breakdown |
 | `artist_similarity_network` | Enriched similarity pairs with both artists' tier and a `cross_tier` / `same_tier` flag |
+| `listener_growth` | Week-over-week listener delta per artist using `LAG` window function |
+| `artist_growth_summary` | One row per artist: total growth, avg weekly %, weeks tracked |
+| `weekly_growth_by_tier` | Aggregate week-over-week listener growth per tier — the time-series view of the core finding |
+| `genre_growth` | Per-genre growth rates: avg and median total pct growth, avg weekly pct change |
 
 ## Key Findings (Snapshot: 2026-04-27)
 
@@ -120,6 +126,30 @@ The mainstream median ratio (74.76) is ~4x higher than indie (17.69), consistent
 | hip-hop | 1,347,606 | 42.54 | 56 | 174 |
 
 Pop shows the highest plays-per-listener ratio despite ranking third in avg listeners — pop fans replay more.
+
+## Longitudinal Findings (2026-05-10 to 2026-06-14, 7 weeks)
+
+24,770 artists tracked across 7 weekly snapshots:
+
+**Growth rate by chart page depth**
+| Page Tier | Artists | Avg Growth | Median Growth | P90 Growth |
+|---|---|---|---|---|
+| 1–10 (mega) | 50 | 2.07% | 1.55% | 2.95% |
+| 11–50 (mainstream) | 200 | 2.08% | 1.73% | 2.75% |
+| 501–1000 (deep indie) | 2,498 | 3.84% | 2.10% | 7.10% |
+| 1000+ (underground) | 4,995 | 4.95% | 2.20% | 9.16% |
+
+Growth rate increases as chart page depth increases. The P90 for underground artists (9.16%) is 3x higher than mainstream (2.75%), indicating a fat tail of fast-movers concentrated in the deepest pages.
+
+**Genre growth rates** (median 7-week listener growth)
+
+EDM leads at 1.72% median growth; classical trails at 0.76%. Genre appears to be a secondary predictor of growth velocity behind chart page position.
+
+**Standout artists**
+
+Several underground artists (pages 1500+) grew 100–400% over 7 weeks. Growth patterns split into two types: viral spike then deceleration (one-time moment), and steady week-over-week acceleration (sustained momentum).
+
+*Caveat: Last.fm listener counts are cumulative all-time and can only increase — growth reflects new scrobblers, not active monthly listeners.*
 
 ## Setup
 
@@ -163,6 +193,5 @@ A GitHub Action runs `snapshot_artists.py` every Sunday at 9am UTC. Required Git
 
 ## What's Next
 
-- **Longitudinal analysis** — after several weeks of snapshots, compare week-over-week listener growth rates by chart tier and correlate chart rank with growth velocity
-- **Similarity network analysis** — do indie artists with more cross-tier connections (similar to mainstream artists) grow faster?
-- **Genre growth patterns** — which genres produce the fastest-growing indie artists?
+- **Deeper longitudinal data** — snapshots continue accumulating weekly; more weeks will strengthen the growth rate findings and surface longer-term trends
+- **Similarity network vs growth** — do indie artists with more cross-tier connections (similar to mainstream artists) grow faster? Currently limited by sparse similarity data for the highest-growth artists
