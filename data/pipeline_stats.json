@@ -1,0 +1,121 @@
+{
+  "generated_at": "2026-06-17",
+  "summary": {
+    "artist_count": 7751,
+    "weeks_tracked": 7,
+    "latest_snapshot": "2026-06-14"
+  },
+  "growth_by_tier": [
+    {
+      "tier": "indie",
+      "artist_count": 7501,
+      "median_pct_growth": 2.16,
+      "p90_pct_growth": 8.39
+    },
+    {
+      "tier": "mainstream",
+      "artist_count": 250,
+      "median_pct_growth": 1.7,
+      "p90_pct_growth": 2.84
+    }
+  ],
+  "top_growing_artists": [
+    {
+      "artist_name": "ridgeclub",
+      "min_page": 1657,
+      "starting_count": 10159,
+      "ending_count": 50134,
+      "total_pct_growth": 393.49
+    },
+    {
+      "artist_name": "Laurinha Costa",
+      "min_page": 1702,
+      "starting_count": 7232,
+      "ending_count": 32410,
+      "total_pct_growth": 348.15
+    },
+    {
+      "artist_name": "Alexandra Căpitănescu",
+      "min_page": 1798,
+      "starting_count": 13309,
+      "ending_count": 46588,
+      "total_pct_growth": 250.05
+    },
+    {
+      "artist_name": "Alyssa Grace",
+      "min_page": 1559,
+      "starting_count": 10029,
+      "ending_count": 32703,
+      "total_pct_growth": 226.08
+    },
+    {
+      "artist_name": "zuriel.",
+      "min_page": 1750,
+      "starting_count": 6342,
+      "ending_count": 18066,
+      "total_pct_growth": 184.86
+    },
+    {
+      "artist_name": "The Bausa",
+      "min_page": 1132,
+      "starting_count": 16437,
+      "ending_count": 45609,
+      "total_pct_growth": 177.48
+    },
+    {
+      "artist_name": "Dara",
+      "min_page": 1678,
+      "starting_count": 42179,
+      "ending_count": 114509,
+      "total_pct_growth": 171.48
+    },
+    {
+      "artist_name": "スーパーマリオギャラクシー",
+      "min_page": 1955,
+      "starting_count": 5427,
+      "ending_count": 13538,
+      "total_pct_growth": 149.46
+    },
+    {
+      "artist_name": "[redacted]",
+      "min_page": 1036,
+      "starting_count": 26287,
+      "ending_count": 65148,
+      "total_pct_growth": 147.83
+    },
+    {
+      "artist_name": "UNCHILD",
+      "min_page": 507,
+      "starting_count": 23124,
+      "ending_count": 56959,
+      "total_pct_growth": 146.32
+    }
+  ],
+  "genre_growth": [
+    {
+      "genre": "edm",
+      "artist_count": 76,
+      "median_total_pct_growth": 2.62
+    },
+    {
+      "genre": "pop",
+      "artist_count": 233,
+      "median_total_pct_growth": 1.67
+    },
+    {
+      "genre": "ambient",
+      "artist_count": 122,
+      "median_total_pct_growth": 1.61
+    },
+    {
+      "genre": "r&b",
+      "artist_count": 96,
+      "median_total_pct_growth": 1.59
+    },
+    {
+      "genre": "country",
+      "artist_count": 110,
+      "median_total_pct_growth": 1.34
+    }
+  ]
+}
