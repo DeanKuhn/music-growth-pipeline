@@ -30,6 +30,7 @@ Analyze whether chart appearances correlate with listener count growth for small
 | dbt mart models (artist_tiers, genre_stats, artist_similarity_network) | Done |
 | dbt mart models (listener_growth, artist_growth_summary, weekly_growth_by_tier, genre_growth) | Done |
 | Longitudinal analysis (longitudinal_analysis.sql) | Done |
+| Portfolio stats pipeline (generate_stats.py → pipeline_stats.json → deanslist.dev) | Done |
 
 ## Environment
 - Python runs in WSL (.venv), not Windows PowerShell
@@ -56,7 +57,9 @@ Analyze whether chart appearances correlate with listener count growth for small
 | `models/marts/artist_growth_summary.sql` | One row per artist: total growth, avg weekly %, weeks tracked — joins listener_growth + artist_tiers |
 | `models/marts/weekly_growth_by_tier.sql` | Aggregate WoW listener growth per tier per week — the time-series view of the core finding |
 | `models/marts/genre_growth.sql` | Per-genre growth summary: avg and median total pct growth, avg weekly pct change |
-| `.github/workflows/weekly_snapshot.yml` | GitHub Action — runs snapshot_artists.py every Sunday at 9am UTC |
+| `generate_stats.py` | Queries mart models, writes data/pipeline_stats.json for portfolio. Run automatically after each weekly snapshot. |
+| `data/pipeline_stats.json` | Output of generate_stats.py — fetched by deanslist.dev at build time to display live stats |
+| `.github/workflows/weekly_snapshot.yml` | GitHub Action — runs snapshot → dbt run → generate_stats.py → git push every Sunday at 9am UTC |
 
 ## Schema
 ```
@@ -74,8 +77,9 @@ artist_similarities  — similar artist pairs with similarity score, fetched via
 - Weekly charts are per-user only (`user.getWeeklyArtistChart`), not global.
 
 ## Current Data
-- 24,770 artists total: 250 mainstream (pages 1-50) + 24,520 indie
-- 8 weekly snapshots: 2026-04-27 through 2026-06-14
+- ~24,770 artists in artists table total: ~7,751 with chart entries (used for tier analysis), remainder seeded via genre tags
+- 7,751 chart artists: 250 mainstream (pages 1-50) + 7,501 indie (pages 500-2000)
+- 8 weekly snapshots: 2026-04-27 through 2026-06-14 (7 weeks of clean longitudinal data from 2026-05-10)
 - Longitudinal data collection started 2026-04-27 — weekly snapshots via GitHub Actions
 
 ## Cross-Sectional Findings (2026-04-27)

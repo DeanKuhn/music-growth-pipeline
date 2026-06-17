@@ -189,7 +189,15 @@ dbt run
 
 ## Automation
 
-A GitHub Action runs `snapshot_artists.py` every Sunday at 9am UTC. Required GitHub secrets: `LASTFM_API_KEY`, `DATABASE_URL`.
+A GitHub Action runs every Sunday at 9am UTC and chains four steps:
+1. `snapshot_artists.py` — snapshots all artists into Neon
+2. `dbt run` — rebuilds all mart views
+3. `generate_stats.py` — queries marts, writes `data/pipeline_stats.json`
+4. `git push` — commits the updated JSON to this repo
+
+The portfolio site at [deanslist.dev](https://deanslist.dev) fetches `pipeline_stats.json` at build time and rebuilds nightly at 3:30am UTC, surfacing fresh stats automatically.
+
+Required GitHub secrets: `LASTFM_API_KEY`, `DATABASE_URL`, `PROFANITY_PATTERN`.
 
 ## What's Next
 
