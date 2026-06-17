@@ -28,7 +28,8 @@ Analyze whether chart appearances correlate with listener count growth for small
 | Genre + similarity data (seed scripts + schema) | Done |
 | dbt staging models (all 6 source tables) | Done |
 | dbt mart models (artist_tiers, genre_stats, artist_similarity_network) | Done |
-| Longitudinal analysis | Pending (needs weeks of snapshots) |
+| dbt mart models (listener_growth, artist_growth_summary, weekly_growth_by_tier, genre_growth) | Done |
+| Longitudinal analysis (longitudinal_analysis.sql) | Done |
 
 ## Environment
 - Python runs in WSL (.venv), not Windows PowerShell
@@ -45,11 +46,16 @@ Analyze whether chart appearances correlate with listener count growth for small
 | `seed_genre_artists.py` | Seeds 15 genres × 500 artists into genres and genre_artists via tag.getTopArtists. Also upserts new artists into artists table. |
 | `seed_similar_artists.py` | Queries top ~2,000 indie artists, calls artist.getSimilar (limit=20) for each, inserts into artist_similarities. One-time run. |
 | `snapshot_artists.py` | Calls artist.getInfo for all artists, inserts into artist_snapshots. Run weekly via GitHub Actions. |
-| `analysis.sql` | Three cross-sectional queries comparing mainstream (pages 1-50) vs indie (pages 500-2000) artists |
+| `analyses/analysis.sql` | Three cross-sectional queries comparing mainstream (pages 1-50) vs indie (pages 500-2000) artists |
+| `analyses/longitudinal_analysis.sql` | Four longitudinal queries: growth by tier, WoW trend by tier, fastest-growing indie artists, growth by genre |
 | `models/staging/` | dbt staging models — one per source table, light renaming only |
 | `models/marts/artist_tiers.sql` | Classifies each artist as mainstream (page ≤50) or indie based on min chart page |
 | `models/marts/genre_stats.sql` | Per-genre summary: artist count, avg listeners, plays-per-listener, tier breakdown |
 | `models/marts/artist_similarity_network.sql` | Enriched similarity pairs with both artists' tier and a cross_tier/same_tier flag |
+| `models/marts/listener_growth.sql` | Week-over-week listener delta per artist using LAG window function |
+| `models/marts/artist_growth_summary.sql` | One row per artist: total growth, avg weekly %, weeks tracked — joins listener_growth + artist_tiers |
+| `models/marts/weekly_growth_by_tier.sql` | Aggregate WoW listener growth per tier per week — the time-series view of the core finding |
+| `models/marts/genre_growth.sql` | Per-genre growth summary: avg and median total pct growth, avg weekly pct change |
 | `.github/workflows/weekly_snapshot.yml` | GitHub Action — runs snapshot_artists.py every Sunday at 9am UTC |
 
 ## Schema
@@ -68,9 +74,9 @@ artist_similarities  — similar artist pairs with similarity score, fetched via
 - Weekly charts are per-user only (`user.getWeeklyArtistChart`), not global.
 
 ## Current Data
-- 7,755 artists total: 250 mainstream (pages 1-50) + 7,505 indie (pages 500-2000)
-- 7,751 artist snapshots taken 2026-04-27
-- Longitudinal data collection started 2026-04-27 — weekly snapshots accumulating via GitHub Actions
+- 24,770 artists total: 250 mainstream (pages 1-50) + 24,520 indie
+- 8 weekly snapshots: 2026-04-27 through 2026-06-14
+- Longitudinal data collection started 2026-04-27 — weekly snapshots via GitHub Actions
 
 ## Cross-Sectional Findings (2026-04-27)
 - Mainstream artists average 3.6M listeners vs indie 348K (~10x)
@@ -78,11 +84,13 @@ artist_similarities  — similar artist pairs with similarity score, fetched via
 - Listener count distributions do not overlap — indie P90 (782K) is below mainstream P25 (2.3M)
 - Caveat: mainstream artists have older catalogues, so accumulated playcounts may partly explain the ratio gap
 
-## Longitudinal Analysis Plan
-After several weeks of weekly snapshots:
-- Compare listener growth rates by chart page tier
-- Correlate chart rank with week-over-week listener change
-- Identify fastest-growing artists in the indie tier
+## Longitudinal Findings (2026-05-10 to 2026-06-14, 7 weeks)
+- Underground artists (pages 1000+) have median 7-week growth of 2.20% vs mainstream 1.55% — growth rate increases as chart page depth increases
+- P90 growth for underground artists (9.16%) is 3x higher than mainstream (2.75%), showing a fat tail of fast-movers
+- Both tiers grow ~0.2% per week in aggregate; mainstream adds more listeners in absolute terms due to larger base
+- Fastest-growing indie artists (100-400% over 7 weeks) are concentrated in pages 1500+; growth patterns split between viral spikes and steady acceleration
+- EDM has the highest median genre growth rate; classical and metal are slowest
+- Caveat: Last.fm listener counts are cumulative all-time, so they can only increase — "growth" reflects new scrobblers, not active monthly listeners
 
 ## Portfolio Context
 - Companion projects: WGU-DSAII-Project (TSP/genetic algorithm), Market-Cynic-Pipeline (Yahoo Finance + Reddit sentiment)
