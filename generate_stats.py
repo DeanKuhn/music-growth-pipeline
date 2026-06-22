@@ -7,13 +7,11 @@ import re
 
 load_dotenv()
 
-PROFANITY_PATTERN = re.compile(
-    r'(' + os.getenv('PROFANITY_PATTERN', '') + r')',
-    re.IGNORECASE
-)
+_pattern_str = os.getenv('PROFANITY_PATTERN', '')
+PROFANITY_PATTERN = re.compile(r'(' + _pattern_str + r')', re.IGNORECASE) if _pattern_str else None
 
 def sanitize_name(name):
-    if PROFANITY_PATTERN.search(name):
+    if PROFANITY_PATTERN and PROFANITY_PATTERN.search(name):
         return '[redacted]'
     return name
 
