@@ -31,6 +31,7 @@ Analyze whether chart appearances correlate with listener count growth for small
 | dbt mart models (listener_growth, artist_growth_summary, weekly_growth_by_tier, genre_growth) | Done |
 | Longitudinal analysis (longitudinal_analysis.sql) | Done |
 | Portfolio stats pipeline (generate_stats.py → pipeline_stats.json → deanslist.dev) | Done |
+| Power BI report (live Postgres connection, overview + artist drillthrough pages) | Done |
 
 ## Environment
 - Python runs in WSL (.venv), not Windows PowerShell
