@@ -1,121 +1,121 @@
 {
-  "generated_at": "2026-06-17",
+  "generated_at": "2026-06-22",
   "summary": {
     "artist_count": 7751,
-    "weeks_tracked": 7,
-    "latest_snapshot": "2026-06-14"
+    "weeks_tracked": 8,
+    "latest_snapshot": "2026-06-22"
   },
   "growth_by_tier": [
     {
       "tier": "indie",
       "artist_count": 7501,
-      "median_pct_growth": 2.16,
-      "p90_pct_growth": 8.39
+      "median_pct_growth": 1.95,
+      "p90_pct_growth": 7.39
     },
     {
       "tier": "mainstream",
       "artist_count": 250,
-      "median_pct_growth": 1.7,
-      "p90_pct_growth": 2.84
+      "median_pct_growth": 1.52,
+      "p90_pct_growth": 2.46
     }
   ],
   "top_growing_artists": [
     {
-      "artist_name": "ridgeclub",
+      "artist_name": "[redacted]",
       "min_page": 1657,
-      "starting_count": 10159,
-      "ending_count": 50134,
-      "total_pct_growth": 393.49
+      "starting_count": 14848,
+      "ending_count": 67267,
+      "total_pct_growth": 353.04
     },
     {
-      "artist_name": "Laurinha Costa",
-      "min_page": 1702,
-      "starting_count": 7232,
-      "ending_count": 32410,
-      "total_pct_growth": 348.15
-    },
-    {
-      "artist_name": "Alexandra Căpitănescu",
+      "artist_name": "[redacted]",
       "min_page": 1798,
-      "starting_count": 13309,
-      "ending_count": 46588,
-      "total_pct_growth": 250.05
+      "starting_count": 15575,
+      "ending_count": 47412,
+      "total_pct_growth": 204.41
     },
     {
-      "artist_name": "Alyssa Grace",
-      "min_page": 1559,
-      "starting_count": 10029,
-      "ending_count": 32703,
-      "total_pct_growth": 226.08
-    },
-    {
-      "artist_name": "zuriel.",
-      "min_page": 1750,
-      "starting_count": 6342,
-      "ending_count": 18066,
-      "total_pct_growth": 184.86
-    },
-    {
-      "artist_name": "The Bausa",
-      "min_page": 1132,
-      "starting_count": 16437,
-      "ending_count": 45609,
-      "total_pct_growth": 177.48
-    },
-    {
-      "artist_name": "Dara",
+      "artist_name": "[redacted]",
       "min_page": 1678,
-      "starting_count": 42179,
-      "ending_count": 114509,
-      "total_pct_growth": 171.48
+      "starting_count": 44367,
+      "ending_count": 117391,
+      "total_pct_growth": 164.59
     },
     {
-      "artist_name": "スーパーマリオギャラクシー",
-      "min_page": 1955,
-      "starting_count": 5427,
-      "ending_count": 13538,
-      "total_pct_growth": 149.46
+      "artist_name": "[redacted]",
+      "min_page": 1559,
+      "starting_count": 17194,
+      "ending_count": 44703,
+      "total_pct_growth": 159.99
     },
     {
       "artist_name": "[redacted]",
       "min_page": 1036,
-      "starting_count": 26287,
-      "ending_count": 65148,
-      "total_pct_growth": 147.83
+      "starting_count": 30965,
+      "ending_count": 76992,
+      "total_pct_growth": 148.64
     },
     {
-      "artist_name": "UNCHILD",
-      "min_page": 507,
-      "starting_count": 23124,
-      "ending_count": 56959,
-      "total_pct_growth": 146.32
+      "artist_name": "[redacted]",
+      "min_page": 1702,
+      "starting_count": 14827,
+      "ending_count": 35918,
+      "total_pct_growth": 142.25
+    },
+    {
+      "artist_name": "[redacted]",
+      "min_page": 1905,
+      "starting_count": 21147,
+      "ending_count": 45941,
+      "total_pct_growth": 117.25
+    },
+    {
+      "artist_name": "[redacted]",
+      "min_page": 1132,
+      "starting_count": 23668,
+      "ending_count": 50940,
+      "total_pct_growth": 115.23
+    },
+    {
+      "artist_name": "[redacted]",
+      "min_page": 1785,
+      "starting_count": 19327,
+      "ending_count": 41008,
+      "total_pct_growth": 112.18
+    },
+    {
+      "artist_name": "[redacted]",
+      "min_page": 1701,
+      "starting_count": 18373,
+      "ending_count": 37790,
+      "total_pct_growth": 105.68
     }
   ],
   "genre_growth": [
     {
       "genre": "edm",
       "artist_count": 76,
-      "median_total_pct_growth": 2.62
+      "median_total_pct_growth": 2.16
     },
     {
       "genre": "pop",
       "artist_count": 233,
-      "median_total_pct_growth": 1.67
-    },
-    {
-      "genre": "ambient",
-      "artist_count": 122,
-      "median_total_pct_growth": 1.61
+      "median_total_pct_growth": 1.52
     },
     {
       "genre": "r&b",
       "artist_count": 96,
-      "median_total_pct_growth": 1.59
+      "median_total_pct_growth": 1.48
+    },
+    {
+      "genre": "ambient",
+      "artist_count": 122,
+      "median_total_pct_growth": 1.43
     },
     {
       "genre": "country",
       "artist_count": 110,
-      "median_total_pct_growth": 1.34
+      "median_total_pct_growth": 1.22
     }
   ]
 }
