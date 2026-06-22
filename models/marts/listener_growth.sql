@@ -9,6 +9,7 @@ with snapshots as (
             order by snapshot_date
             ) as previous_listeners
     from {{ ref('stg_artist_snapshots') }}
+    where snapshot_date != '2026-04-27'
 
 ),
 
