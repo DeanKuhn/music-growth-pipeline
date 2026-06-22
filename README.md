@@ -22,6 +22,7 @@ Since the API only returns cumulative all-time stats (no built-in time series), 
 | Transformation layer | dbt (dbt-postgres) |
 | Analytical queries | SQL |
 | Automation | GitHub Actions (weekly cron) |
+| Reporting | Power BI (live Postgres connection to Neon) |
 
 ## Schema
 
@@ -196,6 +197,8 @@ A GitHub Action runs every Sunday at 9am UTC and chains four steps:
 4. `git push` — commits the updated JSON to this repo
 
 The portfolio site at [deanslist.dev](https://deanslist.dev) fetches `pipeline_stats.json` at build time and rebuilds nightly at 3:30am UTC, surfacing fresh stats automatically.
+
+A Power BI report connects directly to the Neon database via a live Postgres connection and surfaces the core findings across two pages: an overview with growth trends by tier and genre, and an artist drillthrough showing individual listener timelines.
 
 Required GitHub secrets: `LASTFM_API_KEY`, `DATABASE_URL`, `PROFANITY_PATTERN`.
 
