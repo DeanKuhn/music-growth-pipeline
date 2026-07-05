@@ -1,22 +1,22 @@
 {
-  "generated_at": "2026-06-28",
+  "generated_at": "2026-07-05",
   "summary": {
     "artist_count": 7751,
-    "weeks_tracked": 8,
-    "latest_snapshot": "2026-06-28"
+    "weeks_tracked": 9,
+    "latest_snapshot": "2026-07-05"
   },
   "growth_by_tier": [
     {
       "tier": "indie",
       "artist_count": 7501,
-      "median_pct_growth": 2.21,
-      "p90_pct_growth": 8.34
+      "median_pct_growth": 2.51,
+      "p90_pct_growth": 9.48
     },
     {
       "tier": "mainstream",
       "artist_count": 250,
-      "median_pct_growth": 1.73,
-      "p90_pct_growth": 2.78
+      "median_pct_growth": 1.96,
+      "p90_pct_growth": 3.09
     }
   ],
   "top_growing_artists": [
@@ -24,98 +24,98 @@
       "artist_name": "ridgeclub",
       "min_page": 1657,
       "starting_count": 14848,
-      "ending_count": 79013,
-      "total_pct_growth": 432.15
-    },
-    {
-      "artist_name": "Alexandra Căpitănescu",
-      "min_page": 1798,
-      "starting_count": 15575,
-      "ending_count": 47898,
-      "total_pct_growth": 207.53
+      "ending_count": 88900,
+      "total_pct_growth": 498.73
     },
     {
       "artist_name": "[redacted]",
       "min_page": 1036,
       "starting_count": 30965,
-      "ending_count": 87015,
-      "total_pct_growth": 181.01
+      "ending_count": 101356,
+      "total_pct_growth": 227.32
+    },
+    {
+      "artist_name": "Alexandra Căpitănescu",
+      "min_page": 1798,
+      "starting_count": 15575,
+      "ending_count": 48397,
+      "total_pct_growth": 210.74
     },
     {
       "artist_name": "Alyssa Grace",
       "min_page": 1559,
       "starting_count": 17194,
-      "ending_count": 48168,
-      "total_pct_growth": 180.14
-    },
-    {
-      "artist_name": "Dara",
-      "min_page": 1678,
-      "starting_count": 44367,
-      "ending_count": 118885,
-      "total_pct_growth": 167.96
+      "ending_count": 52234,
+      "total_pct_growth": 203.79
     },
     {
       "artist_name": "Laurinha Costa",
       "min_page": 1702,
       "starting_count": 14827,
-      "ending_count": 38022,
-      "total_pct_growth": 156.44
+      "ending_count": 40392,
+      "total_pct_growth": 172.42
+    },
+    {
+      "artist_name": "Dara",
+      "min_page": 1678,
+      "starting_count": 44367,
+      "ending_count": 120375,
+      "total_pct_growth": 171.32
     },
     {
       "artist_name": "The Bausa",
       "min_page": 1132,
       "starting_count": 23668,
-      "ending_count": 55512,
-      "total_pct_growth": 134.54
+      "ending_count": 60072,
+      "total_pct_growth": 153.81
     },
     {
       "artist_name": "Satoshi",
       "min_page": 1905,
       "starting_count": 21147,
-      "ending_count": 46278,
-      "total_pct_growth": 118.84
+      "ending_count": 46586,
+      "total_pct_growth": 120.3
     },
     {
       "artist_name": "Akylas",
       "min_page": 1785,
       "starting_count": 19327,
-      "ending_count": 41248,
-      "total_pct_growth": 113.42
+      "ending_count": 41531,
+      "total_pct_growth": 114.89
     },
     {
       "artist_name": "Søren Torpegaard Lund",
       "min_page": 1701,
       "starting_count": 18373,
-      "ending_count": 38202,
-      "total_pct_growth": 107.92
+      "ending_count": 38551,
+      "total_pct_growth": 109.82
     }
   ],
   "genre_growth": [
     {
       "genre": "edm",
       "artist_count": 76,
-      "median_total_pct_growth": 2.57
-    },
-    {
-      "genre": "pop",
-      "artist_count": 233,
-      "median_total_pct_growth": 1.74
+      "median_total_pct_growth": 2.98
     },
     {
       "genre": "r&b",
       "artist_count": 96,
-      "median_total_pct_growth": 1.72
+      "median_total_pct_growth": 1.97
+    },
+    {
+      "genre": "pop",
+      "artist_count": 233,
+      "median_total_pct_growth": 1.96
     },
     {
       "genre": "ambient",
       "artist_count": 122,
-      "median_total_pct_growth": 1.61
+      "median_total_pct_growth": 1.85
     },
     {
       "genre": "country",
       "artist_count": 110,
-      "median_total_pct_growth": 1.38
+      "median_total_pct_growth": 1.58
     }
   ]
 }
