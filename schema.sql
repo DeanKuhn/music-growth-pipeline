@@ -1,3 +1,7 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+
 CREATE TABLE IF NOT EXISTS artists (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -58,3 +62,22 @@ CREATE TABLE IF NOT EXISTS genre_artists (
     FOREIGN KEY (artist_id) REFERENCES artists(id),
     UNIQUE (genre_id, artist_id)
 );
+
+
+CREATE TABLE IF NOT EXISTS tags (
+    id SERIAL PRIMARY KEY,
+    artist_id INTEGER NOT NULL,
+    tag TEXT NOT NULL,
+    tag_count INTEGER,
+    FOREIGN KEY (artist_id) REFERENCES artists(id),
+    UNIQUE (artist_id, tag)
+);
+
+
+CREATE INDEX IF NOT EXISTS ix_snapshots_date ON artist_snapshots(snapshot_date);
+CREATE INDEX IF NOT EXISTS ix_weekly_charts_artist ON weekly_charts(artist_id);
+CREATE INDEX IF NOT EXISTS ix_genre_artists_artist ON genre_artists(artist_id);
+CREATE INDEX IF NOT EXISTS ix_similar_target
+    ON artist_similarities(similar_artist_id);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_artists_name_norm
+    ON artists (lower(btrim(name)));
