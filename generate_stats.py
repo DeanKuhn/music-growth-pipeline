@@ -8,7 +8,8 @@ import re
 load_dotenv()
 
 _pattern_str = os.getenv('PROFANITY_PATTERN', '')
-PROFANITY_PATTERN = re.compile(r'(' + _pattern_str + r')', re.IGNORECASE) if _pattern_str else None
+PROFANITY_PATTERN = re.compile(r'(' + _pattern_str + r')', re.IGNORECASE) \
+    if _pattern_str else None
 
 def sanitize_name(name):
     if PROFANITY_PATTERN and PROFANITY_PATTERN.search(name):
@@ -29,15 +30,15 @@ cur.execute("""
 """)
 row = cur.fetchone()
 stats['summary'] = {
-    'artist_count': row[0],
-    'weeks_tracked': row[1]
+    'artist_count': row[0], # type:ignore
+    'weeks_tracked': row[1] # type:ignore
 }
 
 cur.execute("""
     select max(snapshot_date) from artist_snapshots
 """)
 row = cur.fetchone()
-stats['summary']['latest_snapshot'] = row[0]
+stats['summary']['latest_snapshot'] = row[0] # type:ignore
 
 # --- GROWTH BY TIER ---
 cur.execute("""
@@ -46,10 +47,12 @@ cur.execute("""
         count(*) as artist_count,
         round(avg(total_pct_growth), 2) as avg_pct_growth,
         round(
-            percentile_cont(0.5) within group (order by total_pct_growth)::numeric, 2
+            percentile_cont(0.5)
+                within group (order by total_pct_growth)::numeric, 2
         ) as median_pct_growth,
         round(
-            percentile_cont(0.9) within group (order by total_pct_growth)::numeric, 2
+            percentile_cont(0.9)
+                within group (order by total_pct_growth)::numeric, 2
         ) as p90_pct_growth
     from artist_growth_summary
     where weeks_tracked >= 6

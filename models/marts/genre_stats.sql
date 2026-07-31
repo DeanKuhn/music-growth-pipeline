@@ -16,17 +16,13 @@ final as (
         g.genre,
 
         count(distinct ga.artist_id) as artist_count,
-
         round(avg(ls.listeners), 0) as avg_listeners,
-
         round(
             avg(ls.playcount::numeric / ls.listeners), 2
         ) as avg_plays_per_listener,
-
         count(
             distinct case when at.tier = 'mainstream' then ga.artist_id end
         ) as mainstream_count,
-
         count(
             distinct case when at.tier = 'indie' then ga.artist_id end
         ) as indie_count
