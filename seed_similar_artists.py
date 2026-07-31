@@ -1,11 +1,13 @@
-import os
 import time
 import logging
 import datetime
 import argparse
-from dotenv import load_dotenv # type:ignore
 import requests # type:ignore
+
 import psycopg2 # type:ignore
+
+from db import get_conn, get_or_create_artist
+from lastfm import get
 
 
 logging.basicConfig(level=logging.INFO,
@@ -13,42 +15,19 @@ logging.basicConfig(level=logging.INFO,
 log = logging.getLogger(__name__)
 
 
-load_dotenv()
-API_KEY = os.getenv("LASTFM_API_KEY")
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not API_KEY:
-    raise SystemExit("ERROR: LASTFM_API_KEY not found.")
-if not DATABASE_URL:
-    raise SystemExit("ERROR: DATABASE_URL not found.")
-
-BASE_URL = "http://ws.audioscrobbler.com/2.0/"
-COMMON_PARAMS = {"api_key": API_KEY, "format": "json"}
-
-
-def get(params: dict) -> dict:
-    response = \
-        requests.get(BASE_URL, params={**COMMON_PARAMS, **params}, timeout=10)
-    response.raise_for_status()
-    data = response.json()
-    if "error" in data:
-        raise ValueError(f"Last.fm error {data['error']}: {data['message']}")
-    return data
-
-
 def seed(conn, cur, start, end):
     snapshot_date = datetime.date.today()
-
-    # Fetch indie artists from DB, ordering by listener count
     try:
         cur.execute("""
             SELECT a.id, a.name, a.mbid
             FROM artists a
             JOIN weekly_charts wc ON a.id = wc.artist_id
-            JOIN artist_snapshots s ON a.id = s.artist_id
             WHERE wc.page BETWEEN %s AND %s
-            ORDER BY s.listeners DESC
-            LIMIT 2000
+              AND NOT EXISTS (
+                  SELECT 1 FROM artist_similarities s WHERE s.artist_id = a.id
+              )
+            GROUP BY a.id, a.name, a.mbid
+            ORDER BY min((wc.page - 1) * 5 + wc.rank)
         """, (start, end))
     except Exception as e:
         log.error(f"Could not fetch from DB, error: {e}")
@@ -61,9 +40,13 @@ def seed(conn, cur, start, end):
         artist_id, name, mbid = artist
         try:
             if mbid:
-                data = get({"method": "artist.getSimilar", "mbid": mbid, "limit": 20})
+                data = get(
+                    {"method": "artist.getSimilar", "mbid": mbid, "limit": 20}
+                )
             else:
-                data = get({"method": "artist.getSimilar", "artist": name, "limit": 20})
+                data = get(
+                    {"method": "artist.getSimilar", "artist": name, "limit": 20}
+                )
             time.sleep(0.2)
         except ValueError as e:
             log.warning(f"Skipping {name}: {e}")
@@ -83,40 +66,30 @@ def seed(conn, cur, start, end):
             similarity_score = similar_artist.get("match")
 
             if not similar_name or similarity_score is None:
-                log.warning(f"Skipping malformed similar artist entry for {name}.")
+                log.warning(
+                    f"Skipping malformed similar artist entry for {name}."
+                )
                 continue
 
             try:
-                # Add to artist database if artist isn't there already
-                cur.execute("""
-                    INSERT INTO artists(name, mbid)
-                    VALUES (%s, %s)
-                    ON CONFLICT (mbid) DO NOTHING
-                    RETURNING id
-                """, (similar_name, similar_mbid))
-
-                row = cur.fetchone()
-                if row is None:
-                    if similar_mbid:
-                        cur.execute(
-                            "SELECT id FROM artists WHERE mbid = %s", (similar_mbid,))
-                    else:
-                        cur.execute(
-                            "SELECT id FROM artists WHERE name = %s", (similar_name,))
-
-                    row = cur.fetchone()
-                similar_artist_id = row[0]
+                similar_artist_id = get_or_create_artist(
+                    cur, similar_name, similar_mbid
+                )
 
                 cur.execute("""
-                    INSERT INTO artist_similarities (artist_id, similar_artist_id,
-                            similar_name, similar_mbid, similarity_score, fetched_at)
+                    INSERT INTO artist_similarities (
+                        artist_id, similar_artist_id, similar_name,
+                        similar_mbid, similarity_score, fetched_at
+                    )
                     VALUES (%s, %s, %s, %s, %s, %s)
                     ON CONFLICT (artist_id, similar_name) DO NOTHING
                 """, (artist_id, similar_artist_id, similar_name, similar_mbid,
                       similarity_score, snapshot_date))
 
             except psycopg2.Error as e:
-                log.warning(f"Skipping similar artist {similar_name} for {name}: {e}")
+                log.warning(
+                    f"Skipping similar artist {similar_name} for {name}: {e}"
+                )
                 conn.rollback()
                 continue
 
@@ -129,13 +102,13 @@ def seed(conn, cur, start, end):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Seed artists from Last.fm chart")
-    parser.add_argument("--start", type=int, default=500)
+    parser = argparse.ArgumentParser(description="Seed artists from Last.fm")
+    parser.add_argument("--start", type=int, default=1)
     parser.add_argument("--end", type=int, default=2000)
     args = parser.parse_args()
 
-    conn = psycopg2.connect(DATABASE_URL) # connection to postgres
-    cur = conn.cursor() # used to run sql
+    conn = get_conn()
+    cur = conn.cursor()
     seed(conn, cur, args.start, args.end)
     conn.commit()
     conn.close()
