@@ -15,6 +15,7 @@ with final as (
     from {{ ref('stg_artist_similarities') }} sim
     join {{ ref('artist_tiers') }} src on sim.artist_id = src.artist_id
     join {{ ref('artist_tiers') }} tgt on sim.similar_artist_id = tgt.artist_id
+    where sim.similar_artist_id is not null
 
 )
 
