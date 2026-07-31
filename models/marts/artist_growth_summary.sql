@@ -18,11 +18,14 @@ summary as (
         t.tier,
         t.min_page,
 
-        min(
-            g.listeners) filter (where g.previous_listeners is null
-        ) as starting_count,
+        -- Take the first and last observation by date, not min()/max().
+        -- Last.fm occasionally revises listener counts downward, and max()
+        -- would silently report a stale peak as the current value.
+        (array_agg(g.listeners order by g.snapshot_date asc))[1]
+            as starting_count,
 
-        max(g.listeners) as ending_count,
+        (array_agg(g.listeners order by g.snapshot_date desc))[1]
+            as ending_count,
 
         avg(g.listener_pct_change) as average_listener_pct,
 
