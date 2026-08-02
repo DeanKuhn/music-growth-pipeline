@@ -1,121 +1,127 @@
 {
-  "generated_at": "2026-07-26",
+  "generated_at": "2026-08-02",
   "summary": {
-    "artist_count": 7751,
-    "weeks_tracked": 12,
-    "latest_snapshot": "2026-07-26"
+    "artist_count": 22201,
+    "weeks_tracked": 14,
+    "latest_snapshot": "2026-08-02"
   },
   "growth_by_tier": [
     {
       "tier": "indie",
-      "artist_count": 7501,
-      "median_pct_growth": 3.41,
-      "p90_pct_growth": 12.78
+      "artist_count": 9255,
+      "median_pct_growth": 3.42,
+      "p90_pct_growth": 12.05
     },
     {
       "tier": "mainstream",
       "artist_count": 250,
-      "median_pct_growth": 2.61,
-      "p90_pct_growth": 4.18
+      "median_pct_growth": 2.76,
+      "p90_pct_growth": 4.42
+    },
+    {
+      "tier": "unranked",
+      "artist_count": 12227,
+      "median_pct_growth": 1.42,
+      "p90_pct_growth": 4.66
     }
   ],
   "top_growing_artists": [
     {
       "artist_name": "ridgeclub",
-      "min_page": 1657,
+      "min_page": 270,
       "starting_count": 14848,
-      "ending_count": 112826,
-      "total_pct_growth": 659.87
+      "ending_count": 115183,
+      "total_pct_growth": 675.75
     },
     {
       "artist_name": "[redacted]",
-      "min_page": 1036,
+      "min_page": 158,
       "starting_count": 30965,
-      "ending_count": 133557,
-      "total_pct_growth": 331.32
+      "ending_count": 137233,
+      "total_pct_growth": 343.19
     },
     {
       "artist_name": "Alyssa Grace",
-      "min_page": 1559,
+      "min_page": 262,
       "starting_count": 17194,
-      "ending_count": 69964,
-      "total_pct_growth": 306.91
+      "ending_count": 73187,
+      "total_pct_growth": 325.65
     },
     {
       "artist_name": "Alexandra Căpitănescu",
       "min_page": 1798,
       "starting_count": 15575,
-      "ending_count": 49644,
-      "total_pct_growth": 218.74
+      "ending_count": 49830,
+      "total_pct_growth": 219.94
     },
     {
       "artist_name": "Laurinha Costa",
       "min_page": 1702,
       "starting_count": 14827,
-      "ending_count": 46820,
-      "total_pct_growth": 215.78
+      "ending_count": 47415,
+      "total_pct_growth": 219.79
     },
     {
       "artist_name": "The Bausa",
       "min_page": 1132,
       "starting_count": 23668,
-      "ending_count": 74058,
-      "total_pct_growth": 212.9
+      "ending_count": 74922,
+      "total_pct_growth": 216.55
     },
     {
       "artist_name": "Dara",
       "min_page": 1678,
       "starting_count": 44367,
-      "ending_count": 123868,
-      "total_pct_growth": 179.19
+      "ending_count": 124251,
+      "total_pct_growth": 180.05
     },
     {
       "artist_name": "El De Las R's",
-      "min_page": 525,
+      "min_page": 206,
       "starting_count": 62367,
-      "ending_count": 151109,
-      "total_pct_growth": 142.29
+      "ending_count": 153282,
+      "total_pct_growth": 145.77
     },
     {
       "artist_name": "Nelson Noise",
       "min_page": 1522,
       "starting_count": 17624,
-      "ending_count": 41451,
-      "total_pct_growth": 135.2
+      "ending_count": 41875,
+      "total_pct_growth": 137.6
     },
     {
       "artist_name": "Cloudside",
       "min_page": 1639,
       "starting_count": 14293,
-      "ending_count": 33303,
-      "total_pct_growth": 133.0
+      "ending_count": 33662,
+      "total_pct_growth": 135.51
     }
   ],
   "genre_growth": [
     {
       "genre": "edm",
-      "artist_count": 76,
-      "median_total_pct_growth": 4.0
-    },
-    {
-      "genre": "r&b",
-      "artist_count": 96,
-      "median_total_pct_growth": 2.63
+      "artist_count": 503,
+      "median_total_pct_growth": 3.41
     },
     {
       "genre": "pop",
-      "artist_count": 233,
-      "median_total_pct_growth": 2.59
+      "artist_count": 516,
+      "median_total_pct_growth": 2.99
+    },
+    {
+      "genre": "hip-hop",
+      "artist_count": 515,
+      "median_total_pct_growth": 2.49
+    },
+    {
+      "genre": "electronic",
+      "artist_count": 524,
+      "median_total_pct_growth": 2.38
     },
     {
       "genre": "ambient",
-      "artist_count": 122,
-      "median_total_pct_growth": 2.45
-    },
-    {
-      "genre": "country",
-      "artist_count": 110,
-      "median_total_pct_growth": 2.19
+      "artist_count": 507,
+      "median_total_pct_growth": 2.32
     }
   ]
 }
