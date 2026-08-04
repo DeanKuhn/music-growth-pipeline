@@ -31,19 +31,12 @@ COMMON_PARAMS = {
 
 
 def get(params: dict) -> dict:
-    # {**COMMON_PARAMS, **params} merges two dicts; params wins on conflicts
     response = \
         requests.get(BASE_URL, params={**COMMON_PARAMS, **params}, timeout=10)
-
-    # raise_for_status() turns any HTTP 400-599 response into an exception
     response.raise_for_status()
-
     data = response.json()
-
-    # After response, double check for 200 responses with error messages
     if "error" in data:
         raise ValueError(f"Last.fm error {data["error"]}: {data["message"]}")
-
     return data
 
 
@@ -55,8 +48,6 @@ def section(title: str):
 
 def audit_artist_get_info():
     section("AUDIT 1: artist.getInfo")
-
-    # Test with a smaller and larger artist
     test_artists = ["Arca", "Taylor Swift"]
 
     for artist_name in test_artists:
@@ -65,7 +56,6 @@ def audit_artist_get_info():
 
         artist = data["artist"]
 
-        # The stats block is the most important part for our project
         stats = artist.get("stats", {})
         listeners = stats.get("listeners", "NOT PRESENT")
         playcount = stats.get("playcount", "NOT PRESENT")
@@ -73,11 +63,9 @@ def audit_artist_get_info():
         print(f"  listeners : {listeners}")
         print(f"  playcount : {playcount}")
 
-        # Tags tell us genre, useful if we want to filter by genre later
         tags = [t["name"] for t in artist.get("tags", {}).get("tag", [])]
         print(f"  top tags  : {tags}")
 
-        # Bio summary often has useful metadata
         bio = artist.get("bio", {}).get("summary", "")
         print(f"  bio chars : {len(bio)} (truncated)")
 
@@ -85,13 +73,11 @@ def audit_artist_get_info():
 def audit_chart_get_top_artists():
     section("AUDIT 2: chart.getTopArtists")
 
-    # Limit controls how many results per page; page lets you paginate
     data = get({"method": "chart.getTopArtists", "limit": 5, "page": 1})
 
     chart = data.get("artists", {})
     artists = chart.get("artist", [])
 
-    # The @attr block contains pagination metadata
     attr = chart.get("@attr", {})
     print(f"\n  Total artists available : {attr.get('total', 'unknown')}")
     print(f"  Current page            : {attr.get('page', 'unknown')}")
@@ -114,7 +100,6 @@ def audit_weekly_chart():
     print(f"\n  Total weekly chart snapshots available for user 'rj': {len(charts)}")
 
 
-    # Converts epoch to readable time
     def ts(unix_str):
         return datetime.datetime.fromtimestamp(
             int(unix_str), datetime.timezone.utc).strftime("%Y-%m-%d")
@@ -130,7 +115,6 @@ def audit_weekly_chart():
     print("\n--- 3b: user.getWeeklyArtistChart (artists for one week) ---")
 
     if charts:
-        # Grab the most recent week to inspect
         recent = charts[-1]
         chart_data = get({
             "method": "user.getWeeklyArtistChart",
@@ -147,7 +131,6 @@ def audit_weekly_chart():
                   f"scrobbles={a.get('playcount', '?')}")
 
 
-# run all three audits and print a summary
 if __name__ == "__main__":
     print("Last.fm API Audit — music-growth-pipeline")
     print("Running three endpoint checks. Each section prints raw findings.")

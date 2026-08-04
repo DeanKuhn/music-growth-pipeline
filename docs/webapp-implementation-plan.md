@@ -1,22 +1,30 @@
 # Plan: Public interactive artist-growth app + ingestion scale-up
 
-> ## PROGRESS — last updated 2026-08-06
+> ## PROGRESS — last updated 2026-08-03
 >
-> **Done:** A0 (diagnostics) · A1 (extensions, 4 indexes, `tags` DDL) · A2 (dedupe + `db.py`/`lastfm.py` + `ux_artists_name_norm`) · A3 (`artist_tiers` left join, chart pages 51-499 backfilled)
+> **Done:** A0 (diagnostics) · A1 (extensions, 4 indexes, `tags` DDL) · A2 (dedupe + `pipeline/db.py`/`pipeline/lastfm.py` + `ux_artists_name_norm`, fix marts to left-join/first-last-by-date) · A3 (marts + `int_artist_base` materialized for real via `dbt build` — see verification below) · `app_readonly` role created (pulled forward from the Security section to unblock A3's `+grants`, since the declarative grants config depends on the role existing)
 >
-> **In progress — A5 (marts → tables, `models/api/` serving layer):**
-> 1. ✅ `dbt_project.yml` — `staging`/`intermediate` as views, `marts`/`api` as tables with declarative `+grants` to `app_readonly`, `lock_timeout` on run start.
-> 2. ✅ `models/intermediate/int_artist_base.sql` — one row per artist with ≥1 snapshot (21,732 of 22,207). Computes `size_band` (7 bands below, fixed at *first* observation — see revision 5), `slug`, `name_norm`, `is_display_safe`, `listener_percentile`. Verified: grain holds, band counts match the histogram, 46 names correctly flagged unsafe.
-> 3. ⬜ `api_artist_timeseries` — next up.
-> 4. ⬜ `api_artist_profile`
-> 5. ⬜ `api_artist_search`
-> 6. ⬜ `api_cohort_weekly`
-> 7. ⬜ `api_artist_similar`
-> 8. ⬜ `api_leaderboard`
-> 9. ⬜ `api_pipeline_health`
-> 10. ⬜ `models/api/schema.yml` tests
+> **Verified 2026-08-03**, after finding the previous note's numbers were stale/never actually re-run:
+> - Live DB previously still had every mart as a VIEW and no `int_artist_base` at all, despite `dbt/dbt_project.yml` and the model file being committed — `dbt build` had never been executed against this database. Now confirmed: `listener_growth`, `artist_tiers`, `artist_growth_summary`, `artist_similarity_network`, `genre_stats`, `weekly_growth_by_tier`, `genre_growth` are all `BASE TABLE`; `int_artist_base` exists as a view (per its `intermediate` config).
+> - `artist_tiers` now has 22,207 rows (full coverage, not the old 7,751-row inner join).
+> - Corrected: `int_artist_base`'s grain is artists with ≥1 snapshot = **22,201** of 22,207 (the old note's "21,732" was actually CLAUDE.md's *different* ≥6-weeks-tracked stat, copied in by mistake — the model itself was never wrong).
+> - `is_display_safe` tested against the actual rendered SQL (both python-dotenv and `source .env; set -a` loading paths) — no quoting corruption from `PROFANITY_PATTERN`; 47 artists flagged unsafe (was noted as 46, off by one — plausibly a new artist since).
+> - `size_band` histogram is well-distributed across all 7 bands, confirming revision 5's fix.
+> - `app_readonly`: created, granted `SELECT` on all tables + `statement_timeout`/`idle_in_transaction_session_timeout`, connection string saved to `.env` as `DATABASE_URL_READONLY`. Confirmed it can read `artist_tiers` and a write attempt is rejected with `permission denied`.
 >
-> Then A6 (`app_readonly` role), then Stage C.
+> **Known doc issue:** this progress block's step labels (A0–A3, `app_readonly`) don't match the Stage A body below (A0–A5, with `app_readonly` under Security, not numbered). Not reconciled yet — go by what's actually in the DB (queries above), not the label numbers, until this is cleaned up.
+>
+> **Next — `dbt/models/api/` serving layer** (the body's A4):
+> 1. ⬜ `api_artist_timeseries`
+> 2. ⬜ `api_artist_profile`
+> 3. ⬜ `api_artist_search`
+> 4. ⬜ `api_cohort_weekly`
+> 5. ⬜ `api_artist_similar`
+> 6. ⬜ `api_leaderboard`
+> 7. ⬜ `api_pipeline_health`
+> 8. ⬜ `dbt/models/api/schema.yml` tests
+>
+> Then Stage C.
 >
 > **Deferred to Stage B** (both are pure API time, ~10× cheaper after the concurrency refactor):
 > - A4 genre backfill via `artist.getTopTags` → `tags` table (~22k calls)
@@ -34,14 +42,14 @@
 
 ## Context
 
-`music-growth-pipeline` currently ends at a static JSON file: `generate_stats.py` writes `data/pipeline_stats.json`, which deanslist.dev (Astro) fetches at build time. The analysis is done, but there is no product — nothing a stranger can use.
+`music-growth-pipeline` currently ends at a static JSON file: `pipeline/generate_stats.py` writes `data/pipeline_stats.json`, which deanslist.dev (Astro) fetches at build time. The analysis is done, but there is no product — nothing a stranger can use.
 
 The goal is a live, public app at `music.deanslist.dev` where anyone can look up a band and see its longitudinal listener growth, plus how it compares to its genre, its tier, and its similar artists. It must be free to host, must not let anonymous traffic hammer a free-tier Neon database, and must be injection-proof. Secondarily, artist coverage grows from ~24,770 to ~50,000 so more searches actually hit.
 
 Two problems found during exploration reshape the work:
 
-1. **`models/marts/artist_tiers.sql:13` inner-joins `stg_weekly_charts`.** Only the 7,751 charted artists get a tier, and every downstream mart inherits that inner join. The other ~17,000 artists have listener history but **no profile row** — search would find them and their page would 404. This is invisible today and fatal to the app.
-2. **The Last.fm chart is exhausted.** `seed_artists.py:48` calls `chart.getTopArtists` with `limit: 5` over 2,000 pages = the entire 10,000-artist chart. Only pages 51–499 (~2,245 artists) remain unseeded. The other ~23k must come from tags and geo.
+1. **`dbt/models/marts/artist_tiers.sql:13` inner-joins `stg_weekly_charts`.** Only the 7,751 charted artists get a tier, and every downstream mart inherits that inner join. The other ~17,000 artists have listener history but **no profile row** — search would find them and their page would 404. This is invisible today and fatal to the app.
+2. **The Last.fm chart is exhausted.** `pipeline/seed_artists.py:48` calls `chart.getTopArtists` with `limit: 5` over 2,000 pages = the entire 10,000-artist chart. Only pages 51–499 (~2,245 artists) remain unseeded. The other ~23k must come from tags and geo.
 
 Because of (1), fixing the marts unlocks 3× the app's artist coverage with zero new ingestion — and those artists already have 14+ weeks of history, whereas newly-seeded ones would show empty charts until ~Nov 2026. **Order is A → C → D → E → B.**
 
@@ -66,7 +74,7 @@ SELECT snapshot_date, count(*) FROM weekly_charts GROUP BY 1 ORDER BY 1;
 SELECT pg_size_pretty(pg_database_size(current_database()));
 ```
 
-### A1. Extensions + indexes (add to `schema.sql`)
+### A1. Extensions + indexes (add to `sql/schema.sql`)
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -78,11 +86,11 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_genre_artists_artist ON genre_artists
 CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_similar_target       ON artist_similarities (similar_artist_id);
 ```
 
-`ix_snapshots_date` is what makes `snapshot_artists.py`'s resumability anti-join cheap — it currently scans the whole snapshot table on every restart. Do **not** add indexes on `artist_snapshots(artist_id)` or `artist_similarities(artist_id)`; the existing UNIQUE constraints already lead on those columns.
+`ix_snapshots_date` is what makes `pipeline/snapshot_artists.py`'s resumability anti-join cheap — it currently scans the whole snapshot table on every restart. Do **not** add indexes on `artist_snapshots(artist_id)` or `artist_similarities(artist_id)`; the existing UNIQUE constraints already lead on those columns.
 
 ### A2. Fix the coverage-gap marts
 
-**`models/marts/artist_tiers.sql`** — left join, third tier, and a limit-independent rank:
+**`dbt/models/marts/artist_tiers.sql`** — left join, third tier, and a limit-independent rank:
 
 ```sql
 left join {{ ref('stg_weekly_charts') }} wc on a.artist_id = wc.artist_id
@@ -93,22 +101,22 @@ case when min(wc.page) is null then 'unranked'
 min((wc.page - 1) * 5 + wc.rank) as global_rank
 ```
 
-`page` only means what it means because `limit=5` is hardcoded at `seed_artists.py:48`. Deriving `global_rank` makes tiering survive a change to that limit.
+`page` only means what it means because `limit=5` is hardcoded at `pipeline/seed_artists.py:48`. Deriving `global_rank` makes tiering survive a change to that limit.
 
-**`models/marts/listener_growth.sql`** — replace the hardcoded `where snapshot_date != '2026-04-27'` with `where snapshot_date > (select min(snapshot_date) from {{ ref('stg_artist_snapshots') }})`.
+**`dbt/models/marts/listener_growth.sql`** — replace the hardcoded `where snapshot_date != '2026-04-27'` with `where snapshot_date > (select min(snapshot_date) from {{ ref('stg_artist_snapshots') }})`.
 
-**`models/marts/artist_growth_summary.sql`** — `max(g.listeners) as ending_count` is wrong the first time Last.fm revises a count downward. Take first/last by date explicitly:
+**`dbt/models/marts/artist_growth_summary.sql`** — `max(g.listeners) as ending_count` is wrong the first time Last.fm revises a count downward. Take first/last by date explicitly:
 
 ```sql
 (array_agg(listeners order by snapshot_date desc))[1] as ending_count,
 (array_agg(listeners order by snapshot_date asc ))[1] as starting_count
 ```
 
-**`models/marts/artist_similarity_network.sql`** — guard `similar_artist_id is not null`; the `unranked` tier fixes the rest.
+**`dbt/models/marts/artist_similarity_network.sql`** — guard `similar_artist_id is not null`; the `unranked` tier fixes the rest.
 
 ### A3. Flip marts to tables
 
-`dbt_project.yml` currently ends at a bare `models: music_growth:`. Replace with:
+`dbt/dbt_project.yml` currently ends at a bare `models: music_growth:`. Replace with:
 
 ```yaml
 models:
@@ -128,7 +136,7 @@ on-run-start: "set lock_timeout = '5s'"
 
 Per-model btree indexes via dbt's native config; the trigram index needs a `post_hook` because the native config can't express an operator class.
 
-### A4. New `models/api/` serving layer
+### A4. New `dbt/models/api/` serving layer
 
 Narrow, pre-joined, pre-indexed tables so the API never queries the general-purpose marts. This is also the clearest "serving layer vs analytical layer" signal for a reviewer.
 
@@ -227,7 +235,7 @@ Third and most important layer: `ALTER ROLE app_readonly SET statement_timeout =
 
 **Mobile:** tiles 2-up under 640px, `ResponsiveContainer` with reduced tick density, tables collapse to cards, 44px tap targets.
 
-**`/how-it-works` is where the job-hunt value concentrates:** architecture diagram (Last.fm → Python → Neon → dbt → serving marts → Next.js), the dbt DAG, a live freshness widget off `/api/stats`, an honest methodology-and-caveats section (cumulative listeners can only increase; chart survivorship; self-reported tags), and deep links to specific repo files so a reviewer lands on `models/marts/artist_growth_summary.sql`, not the repo root.
+**`/how-it-works` is where the job-hunt value concentrates:** architecture diagram (Last.fm → Python → Neon → dbt → serving marts → Next.js), the dbt DAG, a live freshness widget off `/api/stats`, an honest methodology-and-caveats section (cumulative listeners can only increase; chart survivorship; self-reported tags), and deep links to specific repo files so a reviewer lands on `dbt/models/marts/artist_growth_summary.sql`, not the repo root.
 
 **Effort: 5–8 days.**
 
@@ -238,7 +246,7 @@ Third and most important layer: `ALTER ROLE app_readonly SET statement_timeout =
 - Vercel project, **Root Directory = `web`**. **Ignored Build Step: `git diff --quiet HEAD^ HEAD -- web/`** — without this the weekly `chore: update pipeline stats` commit triggers a full production rebuild every Sunday for a JSON file the app doesn't read.
 - Env vars, all server-only (no `NEXT_PUBLIC_`): `DATABASE_URL_READONLY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `REVALIDATE_SECRET`, `IP_HASH_SALT`.
 - `music.deanslist.dev` → CNAME to `cname.vercel-dns.com`. Astro apex untouched; add a reciprocal project card linking to it.
-- **Pipeline → app handshake:** after `generate_stats.py`, the workflow POSTs to `/api/revalidate?secret=…`, which calls `revalidateTag('marts')`. Fresh data appears seconds after the pipeline finishes — a genuinely good demo, and a clean end-to-end freshness story.
+- **Pipeline → app handshake:** after `pipeline/generate_stats.py`, the workflow POSTs to `/api/revalidate?secret=…`, which calls `revalidateTag('marts')`. Fresh data appears seconds after the pipeline finishes — a genuinely good demo, and a clean end-to-end freshness story.
 
 **Does dbt rebuilding tables fight the live app?** Mostly no. dbt-postgres builds `model__dbt_tmp` then drops+renames inside one transaction; the rename takes `ACCESS EXCLUSIVE` momentarily. With sub-100 ms reads the worst case is a few hundred ms of added latency once a week. Two guards: `statement_timeout = '5s'` on the app role (no reader can hold a lock long enough to cause pile-up) and `lock_timeout = '5s'` for dbt (fails fast rather than blocking every queued reader). Upside: table materialization means the app serves one internally-consistent snapshot all week — nobody sees a half-rebuilt mart.
 
@@ -252,28 +260,28 @@ Third and most important layer: `ALTER ROLE app_readonly SET statement_timeout =
 
 | Source | New uniques | Notes |
 |---|---|---|
-| `tag.getTopArtists`, ~150 tags from `chart.getTopTags`, `limit=1000` | ~20–30k | The main lever. Also gives every artist a genre, which the "vs your genre" feature requires. Extends `seed_genre_artists.py` from 15 genres |
+| `tag.getTopArtists`, ~150 tags from `chart.getTopTags`, `limit=1000` | ~20–30k | The main lever. Also gives every artist a genre, which the "vs your genre" feature requires. Extends `pipeline/seed_genre_artists.py` from 15 genres |
 | `geo.getTopArtists`, ~50 countries × 500 | ~10–15k | New script + countries table. Best source of non-Anglo artists; enables a "growth by region" analysis |
 | `chart.getTopArtists` pages 51–499 | ~2,245 | Exhausts the chart. Fills the hole between pages 50 and 500 — right now there's no middle of the distribution, which weakens the "growth vs chart depth" finding |
 
 ### B2. Fix duplicates first
 
-At `seed_artists.py:60`, `ON CONFLICT (mbid) DO NOTHING` doesn't fire when mbid is NULL — the unique index ignores NULLs — so the insert succeeds and creates a duplicate. Scaling to 50k multiplies this, and duplicates surface directly in autocomplete. Before ingesting more:
+At `pipeline/seed_artists.py:60`, `ON CONFLICT (mbid) DO NOTHING` doesn't fire when mbid is NULL — the unique index ignores NULLs — so the insert succeeds and creates a duplicate. Scaling to 50k multiplies this, and duplicates surface directly in autocomplete. Before ingesting more:
 
 1. Dedupe-merge on `lower(btrim(name))` where mbid is null, repointing FK rows.
-2. Add a shared **`db.py`** with one `get_or_create_artist(cur, name, mbid)` used by all seed scripts. There are currently four writers with four subtly different upsert implementations; a fifth is coming.
+2. Add a shared **`pipeline/db.py`** with one `get_or_create_artist(cur, name, mbid)` used by all seed scripts. There are currently four writers with four subtly different upsert implementations; a fifth is coming.
 3. Consider `CREATE UNIQUE INDEX ux_artists_name_norm ON artists (lower(btrim(name)))` — only if the dedupe confirms no legitimately-distinct artists share a normalised name.
 
-Also add `CREATE UNIQUE INDEX ux_weekly_charts ON weekly_charts (artist_id, page, rank, snapshot_date)` — the table has no unique constraint, so every `seed_artists.py` re-run duplicates rows. `min(page)` masks it.
+Also add `CREATE UNIQUE INDEX ux_weekly_charts ON weekly_charts (artist_id, page, rank, snapshot_date)` — the table has no unique constraint, so every `pipeline/seed_artists.py` re-run duplicates rows. `min(page)` masks it.
 
-### B3. Concurrency refactor of `snapshot_artists.py`
+### B3. Concurrency refactor of `pipeline/snapshot_artists.py`
 
 **HTTP in threads, DB in the main thread.** psycopg2 connections aren't safe across threads — never hand a cursor to a worker. `ThreadPoolExecutor(max_workers=10)` performs *only* `artist.getInfo` and returns `(artist_id, listeners, playcount)`; the main thread drains `as_completed()` and batches.
 
 - **Writes:** `psycopg2.extras.execute_values`, 500-row batches, commit per batch. Current code is one execute per artist and one commit at the very end — 50k round trips and a single enormous transaction that loses everything on failure.
 - **Rate limiter:** shared token bucket, not `time.sleep`. Refill 4.0 tokens/s, capacity 5, guarded by a `threading.Lock`; every worker calls `acquire()` before its request. The 10 workers exist to hide ~200 ms of API latency, not to exceed Last.fm's ~5 req/s guidance — the bucket is the throttle.
 - **Retry:** 3 attempts, exponential backoff with jitter, honour `Retry-After`. Retry on 429/5xx/timeouts and Last.fm codes 8/11/16/29. **Don't retry code 6 (not found)** — persist `last_error_code`/`last_error_at` on `artists` and drop persistently-dead names from the worklist. At a plausible 5–10% dead-name rate, retrying them weekly wastes 20+ minutes every run forever.
-- Thread-local `requests.Session` with `HTTPAdapter(pool_maxsize=10)`. Switch `BASE_URL` (`seed_artists.py:24` and siblings) to **https** — it's currently plain http, putting the API key on the wire in cleartext.
+- Thread-local `requests.Session` with `HTTPAdapter(pool_maxsize=10)`. Switch `BASE_URL` (`pipeline/seed_artists.py:24` and siblings) to **https** — it's currently plain http, putting the API key on the wire in cleartext.
 
 **Runtime at 50k:** 50,000 ÷ 4.0 req/s ≈ **3 h 28 m**. Under the 6 h cap, but thinner than it looks once retries and Neon cold starts count.
 
@@ -283,7 +291,7 @@ Also add `CREATE UNIQUE INDEX ux_weekly_charts ON weekly_charts (artist_id, page
 
 Instead, in `.github/workflows/weekly_snapshot.yml`:
 - `timeout-minutes: 330` and `concurrency: {group: weekly-snapshot, cancel-in-progress: false}`.
-- Split `dbt run` + `generate_stats.py` into a **separate job with `needs: snapshot` and `if: always()`**. Today, if the snapshot times out, dbt never runs and stats go stale — the marts should rebuild on whatever data landed.
+- Split `dbt run` + `pipeline/generate_stats.py` into a **separate job with `needs: snapshot` and `if: always()`**. Today, if the snapshot times out, dbt never runs and stats go stale — the marts should rebuild on whatever data landed.
 - **Pin the snapshot date.** `snapshot_date = datetime.date.today()` means a run crossing 00:00 UTC, or a Monday catch-up, writes a *second distinct snapshot_date* — fragmenting the weekly grain and silently corrupting every `LAG` in the marts. Add `--snapshot-date` defaulting to the most recent Sunday; pass it explicitly in CI.
 - Add a catch-up trigger ~5 h after the first. The existing `LEFT JOIN` anti-join already makes restarts correct and idempotent — that design holds up well at scale.
 
@@ -310,7 +318,7 @@ ALTER ROLE app_readonly SET idle_in_transaction_session_timeout = '10s';
 
 Other items: no permissive CORS (same-origin is the default and is correct); security headers via `next.config.js` (`frame-ancestors 'none'`, `nosniff`, `strict-origin-when-cross-origin`); catch every error, log the Postgres detail server-side, return `{error, requestId}` — raw Postgres errors name tables and columns; never `dangerouslySetInnerHTML` on artist names or search terms.
 
-**Content safety — currently missing.** `generate_stats.py` redacts artist names via `PROFANITY_PATTERN` before they reach the portfolio. The web app would expose **all 50,000 raw names** on a recruiter-facing site via autocomplete, leaderboards, and similar-artist tables. Port the same filter into an `is_display_safe` boolean on `api_artist_search` / `api_artist_profile` and decide deliberately whether unsafe names are hidden, redacted, or reachable by direct URL only. Last.fm's deep chart pages contain material you don't want autocompleting on a hiring manager's screen.
+**Content safety — currently missing.** `pipeline/generate_stats.py` redacts artist names via `PROFANITY_PATTERN` before they reach the portfolio. The web app would expose **all 50,000 raw names** on a recruiter-facing site via autocomplete, leaderboards, and similar-artist tables. Port the same filter into an `is_display_safe` boolean on `api_artist_search` / `api_artist_profile` and decide deliberately whether unsafe names are hidden, redacted, or reachable by direct URL only. Last.fm's deep chart pages contain material you don't want autocompleting on a hiring manager's screen.
 
 **Crawler load.** 50k artist URLs is 50k potential uncached DB hits from one Googlebot crawl. Sitemap covering only the top ~1,000 artists, `noindex` on pages with `weeks_tracked < 4`, conservative `robots.txt`.
 
@@ -338,7 +346,7 @@ Confirm as `app_readonly` that every `api_*` table is selectable *after* a dbt r
 
 **Stage B** — dry-run the concurrent snapshot against 500 artists and confirm ≤5 req/s in logs, batched inserts, and that a mid-run kill followed by a restart completes without duplicate or missing rows.
 
-**Tests to add** (repo is currently test-free — `tests/` holds only `.gitkeep`), highest value first:
+**Tests to add** (repo is currently test-free — `dbt/tests/` holds only `.gitkeep`), highest value first:
 1. One integration test against a Dockerised Postgres seeded with ~50 fixture artists, running the *real* endpoint SQL. Catches missing indexes and mart-shape drift — the failures that actually bite.
 2. dbt tests: `unique`/`not_null` on `api_artist_profile.artist_id`, `accepted_values` on `tier`, singular test for one row per `(artist_id, snapshot_date)`. Run `dbt build` in CI.
 3. pytest + `responses`: token-bucket math with a fake clock, retry behaviour including the don't-retry-code-6 rule, batch-insert path.
@@ -352,5 +360,5 @@ Confirm as `app_readonly` that every `api_*` table is selectable *after* a dbt r
 2. **`snapshot_date = today()` fragments the weekly grain** on any long or catch-up run, silently corrupting every `LAG`. Fix before Stage B, not after.
 3. **Neon free storage runs out within ~12 months** at 50k weekly snapshots with materialized marts. Budget $5/mo or plan the rollup now.
 4. **Duplicate artist rows** from the mbid-NULL path will appear in autocomplete the day the app goes live.
-5. **Profanity filtering doesn't carry over** from `generate_stats.py` to the web app.
+5. **Profanity filtering doesn't carry over** from `pipeline/generate_stats.py` to the web app.
 6. **Scope.** A + C + D + E is ~3 weeks of solid part-time work; Stage B adds a week plus months of wall clock before new artists have usable history.

@@ -47,24 +47,39 @@ artist_similarities
   similar_mbid, similarity_score, fetched_at
 ```
 
+## Repository Layout
+
+```
+pipeline/   Python ingestion — shared db.py / lastfm.py, seed scripts,
+            weekly snapshot job, portfolio stats generator
+dbt/        dbt project — dbt_project.yml, models/, analyses/, tests/,
+            seeds/, macros/, snapshots/
+sql/        Raw DDL — schema.sql (idempotent) and migrations/
+docs/       Findings log and the web app implementation plan
+data/       pipeline_stats.json, consumed by deanslist.dev at build time
+web/        Next.js app (not yet started)
+```
+
+dbt commands take `--project-dir dbt`, or run them from inside `dbt/`.
+
 ## Pipeline
 
 ```
 chart.getTopArtists (pages 1–50 and 500–2000)
         ↓
-    seed_artists.py  →  artists + weekly_charts
+    pipeline/seed_artists.py  →  artists + weekly_charts
 
 tag.getTopArtists (15 genres × 500 artists)
         ↓
-    seed_genre_artists.py  →  genres + genre_artists
+    pipeline/seed_genre_artists.py  →  genres + genre_artists
 
 artist.getSimilar (top ~2,000 indie artists, limit 20 each)
         ↓
-    seed_similar_artists.py  →  artist_similarities
+    pipeline/seed_similar_artists.py  →  artist_similarities
 
 artist.getInfo (all artists, weekly)
         ↓
-    snapshot_artists.py  →  artist_snapshots
+    pipeline/snapshot_artists.py  →  artist_snapshots
         ↓  (runs weekly via GitHub Actions)
 
 raw tables
@@ -81,7 +96,7 @@ raw tables
 
 ## dbt Models
 
-**Staging** — one model per source table, light renaming only. Defined in `models/staging/`.
+**Staging** — one model per source table, light renaming only. Defined in `dbt/models/staging/`.
 
 **Marts:**
 
@@ -128,27 +143,32 @@ The mainstream median ratio (74.76) is ~4x higher than indie (17.69), consistent
 
 Pop shows the highest plays-per-listener ratio despite ranking third in avg listeners — pop fans replay more.
 
-## Longitudinal Findings (2026-05-10 to 2026-06-14, 7 weeks)
+## Longitudinal Findings (2026-05-10 to 2026-08-02, 13 weeks)
 
-24,770 artists tracked across 7 weekly snapshots:
+22,201 artists tracked across 13 weekly snapshots.
 
-**Growth rate by chart page depth**
-| Page Tier | Artists | Avg Growth | Median Growth | P90 Growth |
-|---|---|---|---|---|
-| 1–10 (mega) | 50 | 2.07% | 1.55% | 2.95% |
-| 11–50 (mainstream) | 200 | 2.08% | 1.73% | 2.75% |
-| 501–1000 (deep indie) | 2,498 | 3.84% | 2.10% | 7.10% |
-| 1000+ (underground) | 4,995 | 4.95% | 2.20% | 9.16% |
+**Growth rate by starting listener count (quintiles)**
+| Quintile | Starting listeners | Artists | Avg Growth | Median Growth | P90 Growth |
+|---|---|---|---|---|---|
+| 1 (smallest) | 1 – 69,347 | 4,441 | 7.61% | 2.67% | 16.88% |
+| 2 | 69,348 – 137,177 | 4,440 | 4.32% | 2.46% | 10.24% |
+| 3 | 137,179 – 236,316 | 4,440 | 3.07% | 2.10% | 6.53% |
+| 4 | 236,317 – 470,870 | 4,440 | 2.47% | 1.76% | 5.03% |
+| 5 (largest) | 470,929 – 9,126,505 | 4,440 | 2.07% | 1.71% | 3.96% |
 
-Growth rate increases as chart page depth increases. The P90 for underground artists (9.16%) is 3x higher than mainstream (2.75%), indicating a fat tail of fast-movers concentrated in the deepest pages.
+**Smaller artists grow faster, and the effect is monotonic** — median growth falls at every step from the smallest quintile to the largest, with no reversals. The spread between avg and median widens sharply at the small end (7.61% vs 2.67% in Q1, against 2.07% vs 1.71% in Q5): most small artists grow modestly, but a fat tail of fast-movers pulls the mean up. P90 growth in Q1 (16.88%) is over 4x that of Q5 (3.96%).
 
-**Genre growth rates** (median 7-week listener growth)
+Artists are binned by their listener count *at the start* of the window rather than the end. Cutting on the end value would let the fastest growers migrate upward into larger quintiles, flattening the very gradient being measured.
 
-EDM leads at 1.72% median growth; classical trails at 0.76%. Genre appears to be a secondary predictor of growth velocity behind chart page position.
+> **Note on an earlier version of this finding.** This README previously reported growth increasing with *chart page depth* (mainstream 1.55% → underground 2.20%). That analysis inner-joined the chart table, so it silently excluded the ~12,000 artists with listener history but no chart position. Once those artists are included the tier ordering is non-monotonic and the claim does not hold. Listener count is the better size proxy: it is defined for every artist, continuous, and free of the chart's survivorship bias.
+
+**Genre growth rates** (median 13-week listener growth, genres with >50 tracked artists)
+
+EDM leads at 2.89% median growth, followed by pop (2.87%) and hip-hop (2.28%); classical trails at 1.22%, behind metal (1.32%) and punk (1.45%). Genre is a secondary effect — the spread across all 15 genres (1.22–2.89%) is narrower than the spread across size quintiles once the tail is accounted for.
 
 **Standout artists**
 
-Several underground artists (pages 1500+) grew 100–400% over 7 weeks. Growth patterns split into two types: viral spike then deceleration (one-time moment), and steady week-over-week acceleration (sustained momentum).
+Several small artists grew 100–400% over the window. Growth patterns split into two types: viral spike then deceleration (one-time moment), and steady week-over-week acceleration (sustained momentum).
 
 *Caveat: Last.fm listener counts are cumulative all-time and can only increase — growth reflects new scrobblers, not active monthly listeners.*
 
@@ -169,31 +189,35 @@ cp .env.example .env
 # Edit .env: add LASTFM_API_KEY and DATABASE_URL
 
 # Apply schema
-psql $DATABASE_URL -f schema.sql
+psql $DATABASE_URL -f sql/schema.sql
 
 # Seed artists (pages 500-2000 by default)
-python seed_artists.py
+python pipeline/seed_artists.py
 
 # Seed mainstream baseline
-python seed_artists.py --start 1 --end 50
+python pipeline/seed_artists.py --start 1 --end 50
 
 # Take initial snapshot
-python snapshot_artists.py
+python pipeline/snapshot_artists.py
 
 # Seed genre and similarity data (one-time)
-python seed_genre_artists.py
-python seed_similar_artists.py
+python pipeline/seed_genre_artists.py
+python pipeline/seed_similar_artists.py
 
 # Run dbt models
-dbt run
+dbt run --project-dir dbt
 ```
+
+Run the Python scripts from the repo root as shown — they locate `.env` by
+walking up from their own directory, so running them from inside `pipeline/`
+works too.
 
 ## Automation
 
 A GitHub Action runs every Sunday at 9am UTC and chains four steps:
-1. `snapshot_artists.py` — snapshots all artists into Neon
-2. `dbt run` — rebuilds all mart views
-3. `generate_stats.py` — queries marts, writes `data/pipeline_stats.json`
+1. `pipeline/snapshot_artists.py` — snapshots all artists into Neon
+2. `dbt run --project-dir dbt` — rebuilds all mart tables
+3. `pipeline/generate_stats.py` — queries marts, writes `data/pipeline_stats.json`
 4. `git push` — commits the updated JSON to this repo
 
 The portfolio site at [deanslist.dev](https://deanslist.dev) fetches `pipeline_stats.json` at build time and rebuilds nightly at 3:30am UTC, surfacing fresh stats automatically.
