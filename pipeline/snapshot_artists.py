@@ -1,3 +1,4 @@
+import argparse
 import logging
 import datetime
 
@@ -11,8 +12,15 @@ logging.basicConfig(level=logging.INFO,
 log = logging.getLogger(__name__)
 
 
-def snapshot(conn, cur):
-    snapshot_date = datetime.date.today()
+def week_anchor(today=None):
+    """Most recent Sunday on or before `today`."""
+    today = today or datetime.date.today()
+    return today - datetime.timedelta(days=(today.weekday() + 1) % 7)
+
+
+def snapshot(conn, cur, snapshot_date=None):
+    snapshot_date = snapshot_date or week_anchor()
+    log.info(f"Snapshot date: {snapshot_date}")
     cur.execute("""
         SELECT a.id, a.name, a.mbid
         FROM artists a
@@ -51,8 +59,18 @@ def snapshot(conn, cur):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--date",
+        type=datetime.date.fromisoformat,
+        default=None,
+        help="Pin the snapshot to this YYYY-MM-DD instead of the current "
+             "week's Sunday. Use when resuming an interrupted run.",
+    )
+    args = parser.parse_args()
+
     conn = get_conn()
     cur = conn.cursor()
-    snapshot(conn, cur)
+    snapshot(conn, cur, snapshot_date=args.date)
     conn.commit()
     conn.close()

@@ -20,8 +20,6 @@ conn = psycopg2.connect(os.getenv('DATABASE_URL'))
 cur = conn.cursor()
 
 stats = {}
-
-# Get the current date
 stats['generated_at'] = date.today().isoformat()
 
 # --- SUMMARY ---
@@ -117,8 +115,8 @@ stats['genre_growth'] = [
     for row in rows
 ]
 
-output_path = os.path.join(os.path.dirname(__file__),
-                           'data', 'pipeline_stats.json')
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+output_path = os.path.join(REPO_ROOT, 'data', 'pipeline_stats.json')
 
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 

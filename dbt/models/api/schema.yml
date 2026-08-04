@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: api_artist_timeseries
+    description: >
+      One row per artist per complete weekly snapshot. Serving model for the
+      artist chart endpoint and the input to api_cohort_weekly. Partial
+      snapshot weeks are excluded — see the model for why.
+    columns:
+      - name: artist_id
+        description: FK to artists.
+        tests:
+          - not_null
+      - name: snapshot_date
+        description: Week of observation. Only complete weeks appear here.
+        tests:
+          - not_null
+      - name: week_number
+        description: 1-based position of this week within the artist's own series.
+        tests:
+          - not_null
+      - name: listeners
+        description: Cumulative all-time Last.fm listeners. Can only increase.
+        tests:
+          - not_null
+      - name: listener_delta
+        description: Listeners gained since the previous week. Null in week 1.
+      - name: listener_pct_change
+        description: Week-over-week percent change. Null in week 1.
+      - name: listeners_indexed
+        description: >
+          Listeners rebased to 100 at the artist's first complete week.
+          Always 100.00 when week_number = 1.
+        tests:
+          - not_null
+
+  - name: api_artist_profile
+    description: >
+      One row per artist. Backs GET /api/artists/[slug]. Growth figures are
+      derived from api_artist_timeseries so the profile always agrees with the
+      chart on the same page.
+    columns:
+      - name: artist_id
+        tests:
+          - unique
+          - not_null
+      - name: slug
+        description: URL identifier, "<artist_id>-<normalised-name>".
+        tests:
+          - unique
+          - not_null
+      - name: name_norm
+        description: lower(unaccent(btrim(name))). Search/match key.
+        tests:
+          - not_null
+      - name: is_display_safe
+        description: False when the name matches PROFANITY_PATTERN.
+        tests:
+          - not_null
+      - name: tier
+        tests:
+          - accepted_values:
+              values: ['mainstream', 'indie', 'unranked']
+      - name: size_band
+        description: Listener band. Use this as the cohort key, never tier.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['<10k', '10k-50k', '50k-100k', '100k-250k',
+                       '250k-500k', '500k-1M', '1M+']
+      - name: genres
+        description: text[] ordered by rank_in_genre. Empty array, never null.
+        tests:
+          - not_null
+      - name: total_pct_growth
+        description: Null when the artist has fewer than 2 complete weeks.
+      - name: pct_rank_in_size_band
+        description: >
+          percent_rank of total_pct_growth within size_band. Null when growth
+          is null.
+      - name: pct_rank_in_genre
+        description: Null when the artist has no genre rows.
