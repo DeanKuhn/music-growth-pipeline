@@ -58,6 +58,11 @@ jobs:
           "
 
       - name: Run dbt
+        env:
+          # dbt reads this via env_var() to compute is_display_safe.
+          # Without it the Jinja falls through to its fail-open branch and
+          # every artist name is republished as display-safe.
+          PROFANITY_PATTERN: ${{ secrets.PROFANITY_PATTERN }}
         run: dbt run
 
       - name: Generate portfolio stats
