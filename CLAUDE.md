@@ -78,5 +78,8 @@ The first two snapshot dates are **not** weekly runs and must be excluded from a
 
 Known consequence: `listener_growth.sql` drops only the global min date, so the 7,751 artists with an 04-27 row get one 13-day delta labelled as a week at 05-10. Narrow (one week, one cohort); slightly affects `average_listener_pct`. Not fixed — changing it would move published numbers.
 
+## ⚠ Open issue to pick up first
+The live portfolio site is publishing a `growth_by_tier` block (indie 3.42 · mainstream 2.76 · **unranked** 1.42) that contradicts the size-quintile finding in the README. It shipped in `27c9aa6` and re-publishes on every nightly rebuild. Fix options are written up as Issue #1 in `docs/findings.md`.
+
 ## Findings — headline only
 Median total growth falls monotonically with artist size, by **starting**-listener quintile: 2.67% / 2.46% / 2.10% / 1.76% / 1.71% (smallest → largest, 13 weeks, 22,201 artists). Verified 2026-08-03 and published in README. The earlier "growth increases with chart page depth" claim is **retracted** — do not restate it. Caveat on everything: listener counts are cumulative all-time, so "growth" means new scrobblers, not active listeners. Full detail and the open data-quality issues live in `docs/findings.md`.
