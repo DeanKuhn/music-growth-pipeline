@@ -16,3 +16,17 @@ clean-targets:
 
 models:
   music_growth:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table
+      +grants:
+        select: ['app_readonly']
+    api:
+      +materialized: table
+      +grants:
+        select: ['app_readonly']
+
+on-run-start: "set lock_timeout = '5s'"

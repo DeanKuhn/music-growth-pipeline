@@ -1,10 +1,22 @@
 # Plan: Public interactive artist-growth app + ingestion scale-up
 
-> ## PROGRESS — last updated 2026-07-31
+> ## PROGRESS — last updated 2026-08-06
 >
 > **Done:** A0 (diagnostics) · A1 (extensions, 4 indexes, `tags` DDL) · A2 (dedupe + `db.py`/`lastfm.py` + `ux_artists_name_norm`) · A3 (`artist_tiers` left join, chart pages 51-499 backfilled)
 >
-> **Next: A5** (marts → tables, `models/api/` serving layer), then A6 (`app_readonly` role), then Stage C.
+> **In progress — A5 (marts → tables, `models/api/` serving layer):**
+> 1. ✅ `dbt_project.yml` — `staging`/`intermediate` as views, `marts`/`api` as tables with declarative `+grants` to `app_readonly`, `lock_timeout` on run start.
+> 2. ✅ `models/intermediate/int_artist_base.sql` — one row per artist with ≥1 snapshot (21,732 of 22,207). Computes `size_band` (7 bands below, fixed at *first* observation — see revision 5), `slug`, `name_norm`, `is_display_safe`, `listener_percentile`. Verified: grain holds, band counts match the histogram, 46 names correctly flagged unsafe.
+> 3. ⬜ `api_artist_timeseries` — next up.
+> 4. ⬜ `api_artist_profile`
+> 5. ⬜ `api_artist_search`
+> 6. ⬜ `api_cohort_weekly`
+> 7. ⬜ `api_artist_similar`
+> 8. ⬜ `api_leaderboard`
+> 9. ⬜ `api_pipeline_health`
+> 10. ⬜ `models/api/schema.yml` tests
+>
+> Then A6 (`app_readonly` role), then Stage C.
 >
 > **Deferred to Stage B** (both are pure API time, ~10× cheaper after the concurrency refactor):
 > - A4 genre backfill via `artist.getTopTags` → `tags` table (~22k calls)
@@ -15,6 +27,8 @@
 > 2. **Do not build `api_cohort_weekly` on `tier`.** "unranked" is an observation gap, not a popularity band — it holds both 5.5M-listener artists and 1-listener artists. Use **listener percentile bands** instead. Keep `tier` only for the chart-depth analysis.
 > 3. Neon is at 53 MB of ~0.5 GiB, not near the limit. The storage-crunch risk is ~a year further out than estimated; `CONCURRENTLY` is unnecessary at this size.
 > 4. Stage A2's "handle collisions" step turned out to be unnecessary — all 36,468 duplicate snapshot rows were byte-identical, so losers were deleted rather than merged.
+> 5. **`size_band` cut points, chosen from the actual listener histogram** (log-decade bands put 62.5% of artists in one bucket): `<10k` / `10k-50k` / `50k-100k` / `100k-250k` / `250k-500k` / `500k-1M` / `1M+`, keyed off each artist's *first* observation so cohort membership never drifts as an artist grows. `listener_percentile` (in `int_artist_base`) is the separate, *latest*-listeners display stat — the two are intentionally asymmetric.
+> 6. `dbt run`/`dbt build` need `PROFANITY_PATTERN` exported into the shell (`env_var()` reads the process env, not `.env`) — CI's `Run dbt` step now sets it explicitly. `.env` values containing shell metacharacters (`|`, `&`, etc.) must be quoted or `source`/`set -a` mis-parses them; this silently defeated the profanity filter once already.
 >
 > See `CLAUDE.md` § *Open Data-Quality Issues* for the six unresolved items.
 

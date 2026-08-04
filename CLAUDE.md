@@ -108,7 +108,7 @@ Key index: `ux_artists_name_norm` on `lower(btrim(name))` — makes duplicate ar
 - Caveat: mainstream artists have older catalogues, so accumulated playcounts may partly explain the ratio gap
 
 ## Longitudinal Findings (2026-05-10 to 2026-06-14, 7 weeks)
-- Underground artists (pages 1000+) have median 7-week growth of 2.20% vs mainstream 1.55% — growth rate increases as chart page depth increases
+- Underground artists (pages 1000+) have median 7-week growth of 2.20% vs mainstream 1.55% — growth rate increases as chart page depth increases (⚠ see Open Data-Quality Issue #1 — this does not survive the full-tier fix and should not be restated in portfolio copy)
 - P90 growth for underground artists (9.16%) is 3x higher than mainstream (2.75%), showing a fat tail of fast-movers
 - Both tiers grow ~0.2% per week in aggregate; mainstream adds more listeners in absolute terms due to larger base
 - Fastest-growing indie artists (100-400% over 7 weeks) are concentrated in pages 1500+; growth patterns split between viral spikes and steady acceleration
