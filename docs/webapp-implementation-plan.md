@@ -19,12 +19,12 @@
 > 2. ✅ `api_artist_profile`
 > 3. ✅ `api_artist_search` — 22,154 rows (22,201 profiles minus 47 unsafe names), 5 indexes incl. `gin (name_norm gin_trgm_ops)`, verified in Neon 2026-08-05
 > 4. ✅ `api_cohort_weekly` — 299 rows: `all` (1) + `size_band` (7) + `genre` (15) × 13 weeks. Cohorted on `size_band` per revision 2. Built on a **fixed panel** (artists whose series starts 2026-05-10); without it the ~470 later-seeded artists entered at indexed=100 in the final week and pulled its median down 102.11 → 102.06, which reads as a growth slowdown but is composition drift. Genres below `min_cohort_size` (20) are dropped — 15 of them survive.
-> 5. ⬜ `api_artist_similar`
-> 6. ⬜ `api_leaderboard`
-> 7. ⬜ `api_pipeline_health`
-> 8. ⬜ `dbt/models/api/schema.yml` tests
+> 5. ✅ `api_artist_similar` — 69,748 rows. Edges symmetrised, which lifts artists with a non-empty similar table from 1,982 to **14,325** (issue #5 was a display bug as much as a seeding gap). Capped at `max_similar_per_artist` (20).
+> 6. ✅ `api_leaderboard` — 3 metrics × 8 scopes ('all' + 7 size bands) × 50. Candidates are the 21,614 artists that are display-safe, have the full 13-week window, and started above `min_leaderboard_listeners` (1,000).
+> 7. ✅ `api_pipeline_health` — 1 row; freshness measured from `latest_snapshot_date`, not the dbt run.
+> 8. ✅ `dbt/models/api/schema.yml` tests — 7 models covered; grain assertions as singular tests in `dbt/tests/`, plus a reusable `assert_single_row` generic in `dbt/tests/generic/`. No `dbt_utils` dependency.
 >
-> Then Stage C.
+> **Stage A5b is complete — all 7 api models built and tested (2026-08-05).** Next: Stage C.
 >
 > **Deferred to Stage B** (both are pure API time, ~10× cheaper after the concurrency refactor):
 > - A4 genre backfill via `artist.getTopTags` → `tags` table (~22k calls)

@@ -169,3 +169,101 @@ models:
         description: >
           Median week-over-week percent change (median of the changes, not the
           change in the median). Null in week 1.
+
+  - name: api_artist_similar
+    description: >
+      Up to max_similar_per_artist (20) neighbours per artist, each with its
+      own growth. Backs GET /api/artists/[slug]/similar. Edges are
+      symmetrised — the raw table is one-directional and would leave 7,766
+      artists with an empty table.
+    columns:
+      - name: artist_id
+        description: The artist whose page this row appears on.
+        tests:
+          - not_null
+      - name: similar_artist_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('api_artist_profile')
+              field: artist_id
+      - name: slug
+        description: The neighbour's slug. Always resolves to a profile.
+        tests:
+          - not_null
+      - name: display_name
+        description: >
+          The neighbour's real name — unsafe artists are excluded from this
+          model, not redacted.
+        tests:
+          - not_null
+      - name: similarity_score
+        description: Last.fm match score, 0-1. Higher of the two directions.
+        tests:
+          - not_null
+      - name: rank
+        description: 1-based, by similarity_score then listeners.
+        tests:
+          - not_null
+      - name: total_pct_growth
+        description: The neighbour's own growth over the window.
+
+  - name: api_leaderboard
+    description: >
+      Precomputed top-N (leaderboard_size, 50) for three metrics, scoped
+      globally and per size_band. Backs GET /api/leaderboards. Excludes
+      artists under min_leaderboard_listeners and artists without the full
+      window — see the model for why.
+    columns:
+      - name: slice_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['fastest_growing_pct', 'biggest_listener_gain',
+                       'most_listeners']
+      - name: slice_key
+        description: The literal 'all', or a size_band value.
+        tests:
+          - not_null
+      - name: rank
+        description: 1-based within (slice_type, slice_key).
+        tests:
+          - not_null
+      - name: metric_value
+        description: The value this slice is ranked on.
+        tests:
+          - not_null
+      - name: slug
+        tests:
+          - not_null
+          - relationships:
+              to: ref('api_artist_profile')
+              field: slug
+      - name: display_name
+        tests:
+          - not_null
+
+  - name: api_pipeline_health
+    description: >
+      Exactly one row. Backs GET /api/stats and the how-it-works page.
+      Freshness is measured from the latest snapshot_date, not the dbt run, so
+      a successful rebuild over failed ingestion still shows as stale.
+    tests:
+      - assert_single_row
+    columns:
+      - name: artists_total
+        tests:
+          - not_null
+      - name: latest_snapshot_date
+        tests:
+          - not_null
+      - name: days_since_snapshot
+        description: '> 7 means a weekly run was missed.'
+        tests:
+          - not_null
+      - name: weeks_in_series
+        description: >
+          Distinct weeks in api_artist_timeseries — fewer than snapshot_dates,
+          which counts the two partial pre-window dates too.
+        tests:
+          - not_null
