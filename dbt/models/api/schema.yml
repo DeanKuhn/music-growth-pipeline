@@ -243,6 +243,36 @@ models:
         tests:
           - not_null
 
+  - name: api_genres
+    description: >
+      One row per genre. Backs GET /api/genres. Left-joins genre_growth onto
+      genre_stats, so growth columns are null for genres below
+      genre_growth's weeks_tracked >= 6 / >= 50 qualifying-artist thresholds
+      rather than the genre disappearing from the endpoint.
+    columns:
+      - name: genre_id
+        tests:
+          - unique
+          - not_null
+      - name: genre
+        tests:
+          - unique
+          - not_null
+      - name: artist_count
+        description: Count from genre_stats — every genre with >=1 artist.
+        tests:
+          - not_null
+      - name: avg_listeners
+        description: >
+          Latest-snapshot average across all artists in the genre. Distinct
+          from growth_avg_weekly_pct_change's population (see model note).
+        tests:
+          - not_null
+      - name: avg_total_pct_growth
+        description: Null when the genre is below genre_growth's thresholds.
+      - name: median_total_pct_growth
+        description: Null when the genre is below genre_growth's thresholds.
+
   - name: api_pipeline_health
     description: >
       Exactly one row. Backs GET /api/stats and the how-it-works page.

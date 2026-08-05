@@ -9,6 +9,8 @@ Python ingestion → Postgres (Neon) → dbt (dbt-postgres) → SQL analyses. So
 ## Environment
 - Python runs in WSL (`.venv`), not Windows PowerShell
 - `.env` holds `DATABASE_URL` (Neon) and `LASTFM_API_KEY`; both are also GitHub Actions secrets
+- Node/npm for `web/` must be WSL-native (`~/.nvm`), not the Windows install reached via `/mnt/c/Program Files/nodejs/` interop — that install's process isn't reachable from WSL's network namespace, so `npm run dev` starts but `localhost:3000` is unreachable. Same failure class as the Python/PowerShell note above.
+- **The repo must live on WSL's native filesystem** (e.g. `~/code/music-growth-pipeline`), not `/mnt/c/...`. `npm install` on the 9p-mounted Windows drive throws `ENOTEMPTY`/`ENOENT` mid-extraction unpredictably. If both a `/mnt/c/...` and a `~/code/...` copy exist, the `~/code` one is authoritative — check `git log`/file timestamps before trusting either.
 
 ## Repo Layout
 ```
@@ -17,7 +19,7 @@ dbt/       dbt project — dbt_project.yml, models/, analyses/, tests/, seeds/, 
 sql/       schema.sql + migrations/
 docs/      findings.md, webapp-implementation-plan.md
 data/      pipeline_stats.json (root-level: deanslist.dev fetches this path)
-web/       Next.js app — not yet created
+web/       Next.js app — App Router, TS, all 8 API routes built (Stage C complete)
 ```
 - Run Python from the repo root: `python pipeline/snapshot_artists.py`. Imports resolve because the script's own directory goes on `sys.path`; `.env` is found by walking up from the file, so running from inside `pipeline/` also works.
 - dbt needs `--project-dir dbt` (or `cd dbt` first). Paths inside `dbt_project.yml` are relative to it and unchanged.
@@ -25,7 +27,7 @@ web/       Next.js app — not yet created
 ## Where the work is
 The pipeline (ingestion, marts, analyses, weekly automation, Power BI) is complete. Current work is the public web app — see `docs/webapp-implementation-plan.md` for Stages A–E.
 
-**Now:** Stage A is **complete** — all 7 `dbt/models/api/` models built and tested, and `app_readonly` grants verified against the live DB after a rebuild (2026-08-05). Next is Stage C: the Next.js app. Stages C/D/E (Next.js, frontend, Vercel) not started.
+**Now:** Stages A and C are **complete**. Stage A: all 7 `dbt/models/api/` models built and tested, `app_readonly` grants verified against the live DB after a rebuild (2026-08-05) — plus an 8th, `api_genres`, added during Stage C. Stage C: `web/` (Next.js 15 App Router, TS) built, all 8 endpoints verified end-to-end against the live DB with the real `app_readonly` role (2026-08-05) — see `docs/webapp-implementation-plan.md`'s PROGRESS block for the two validation bugs and one credential-mixup incident found and fixed during that verification. Next is Stage D: the frontend. Stages D/E (frontend, Vercel) not started.
 
 ## File Guide
 Only entries with something non-obvious about them. Everything else is named for what it does.
@@ -49,6 +51,10 @@ Only entries with something non-obvious about them. Everything else is named for
 | `dbt/models/api/api_pipeline_health.sql` | Freshness comes from `latest_snapshot_date`, not the dbt run — a rebuild over failed ingestion must still read as stale. |
 | `dbt/models/api/api_cohort_weekly.sql` | Cohorts on `size_band`, never `tier`. Built on a **fixed panel** of artists whose series starts at the window's first week — otherwise later-seeded artists enter at indexed=100 and depress that week's median. |
 | `dbt/models/api/api_artist_search.sql` | Excludes unsafe artists entirely — they must not autocomplete. Index opclasses (`gin_trgm_ops`, `text_pattern_ops`) ride inside the `columns` strings; dbt has no opclass field but interpolates them verbatim. |
+| `dbt/models/api/api_genres.sql` | Added during Stage C, not in the original A4 list — left-joins `genre_growth` onto `genre_stats` so `/api/genres` never has to query those marts directly. Growth columns nullable by design (genre_growth needs `weeks_tracked >= 6` and ≥50 qualifying artists, a stricter population than genre_stats). |
+| `web/src/lib/db.ts` | Exports `sql` (the `neon()` tagged-template client) and `assertReadonlyRole()` — the latter queries `current_user` once per warm instance and throws if it isn't `app_readonly`, catching a wrong-but-different `DATABASE_URL_READONLY` that the byte-equality check above it can't. Called from `rate-limit.ts`, not here directly. |
+| `web/src/lib/rate-limit.ts` | `withRateLimit()` wraps every route: calls `assertReadonlyRole()` first (fails **closed** — 500, unlike the limiter below) then the in-memory sliding-window limiter (fails **open** on error). `getLimiter()` is the single Upstash swap point once that account exists. |
+| `web/src/lib/validation.ts` | Frozen whitelists (`SIZE_BANDS`, `TIERS`, etc.) built from actual dbt model output, not plan prose. `limitSchema` must stay `.optional().default()`, not `.catch()` — `.catch()` silently swallows out-of-range input into the fallback instead of 400ing, which is how `?limit=99999` slipped through undetected once already. `searchQuerySchema` rejects `%`/`_` since `q` is interpolated into a `LIKE` pattern. |
 | `.github/workflows/weekly_snapshot.yml` | Sundays 9am UTC: snapshot → dbt run → generate_stats → git push. |
 | `docs/findings.md` | Full findings + data-quality log. Read it before writing portfolio copy or touching cohort logic. |
 
