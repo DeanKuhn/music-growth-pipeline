@@ -107,7 +107,7 @@ async function handler(req: NextRequest, { params }: RouteContext) {
   // dropped below min_cohort_size and was filtered out of api_cohort_weekly)
   // still returns 200 with the artist's own series and null cohort columns —
   // the frontend distinguishes "no comparison available" from "not found".
-  const cohortAvailable = rows.some((r: { median_indexed: number | null }) => r.median_indexed !== null);
+  const cohortAvailable = rows.some((r) => r.median_indexed !== null);
 
   const response = NextResponse.json({
     artist_id: artistId,
