@@ -71,6 +71,13 @@ jobs:
           PROFANITY_PATTERN: ${{ secrets.PROFANITY_PATTERN }}
         run: python pipeline/generate_stats.py
 
+      - name: Revalidate web app cache
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          curl -sf -X POST "https://music.deanslist.dev/api/revalidate?secret=${REVALIDATE_SECRET}" \
+            || echo "::warning::revalidate call failed — app will still pick up new data within the hour via s-maxage"
+
       - name: Commit and push stats
         run: |
           git config user.name "github-actions[bot]"
