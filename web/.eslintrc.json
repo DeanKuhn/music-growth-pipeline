@@ -1,0 +1,12 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "CallExpression[callee.name='sql'][arguments.0.type!='TemplateLiteral']",
+        "message": "sql() must only be called as a tagged template (sql`...`). Calling it as a plain function executes raw SQL and is the one injection path in @neondatabase/serverless."
+      }
+    ]
+  }
+}
