@@ -25,7 +25,7 @@ web/       Next.js app — not yet created
 ## Where the work is
 The pipeline (ingestion, marts, analyses, weekly automation, Power BI) is complete. Current work is the public web app — see `docs/webapp-implementation-plan.md` for Stages A–E.
 
-**Now:** Stage A5b, the `dbt/models/api/` serving layer. `api_artist_timeseries` and `api_artist_profile` are built (2/7). Remaining: `api_artist_search`, `api_cohort_weekly`, `api_artist_similar`, `api_leaderboard`, `api_pipeline_health`. Stages C/D/E (Next.js, frontend, Vercel) not started.
+**Now:** Stage A5b, the `dbt/models/api/` serving layer. `api_artist_timeseries`, `api_artist_profile`, `api_artist_search` and `api_cohort_weekly` are built (4/7). Remaining: `api_artist_similar`, `api_leaderboard`, `api_pipeline_health`. Stages C/D/E (Next.js, frontend, Vercel) not started.
 
 ## File Guide
 Only entries with something non-obvious about them. Everything else is named for what it does.
@@ -42,7 +42,10 @@ Only entries with something non-obvious about them. Everything else is named for
 | `sql/schema.sql` | Idempotent, safe to re-run. `sql/migrations/` holds one-offs that would be meaningless on a fresh DB. |
 | `dbt/models/api/` | Serving layer — narrow, pre-joined, pre-indexed tables read by the app's route handlers. **Never query the marts from the API.** |
 | `dbt/models/api/api_artist_timeseries.sql` | Series starts 2026-05-10 (`var('series_start_date')`) — see Data History. |
-| `dbt/models/intermediate/int_artist_base.sql` | Computes `is_display_safe` from the `PROFANITY_PATTERN` env var. Without it set, the Jinja fails open and every name is marked safe. |
+| `dbt/macros/profanity.sql` | **Only** place that reads `PROFANITY_PATTERN`. Provides `is_display_safe()` / `display_name()`; **fails the build** if the env var is unset (override: `--vars 'allow_unfiltered_names: true'`). |
+| `dbt/models/intermediate/int_artist_base.sql` | Applies the profanity macros once, at the source: emits `display_name` (`'[redacted]'`) and a `<id>-redacted` slug so an unsafe name never reaches a public URL. |
+| `dbt/models/api/api_cohort_weekly.sql` | Cohorts on `size_band`, never `tier`. Built on a **fixed panel** of artists whose series starts at the window's first week — otherwise later-seeded artists enter at indexed=100 and depress that week's median. |
+| `dbt/models/api/api_artist_search.sql` | Excludes unsafe artists entirely — they must not autocomplete. Index opclasses (`gin_trgm_ops`, `text_pattern_ops`) ride inside the `columns` strings; dbt has no opclass field but interpolates them verbatim. |
 | `.github/workflows/weekly_snapshot.yml` | Sundays 9am UTC: snapshot → dbt run → generate_stats → git push. |
 | `docs/findings.md` | Full findings + data-quality log. Read it before writing portfolio copy or touching cohort logic. |
 

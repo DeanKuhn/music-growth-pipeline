@@ -1,5 +1,3 @@
-{% set profanity_pattern = env_var('PROFANITY_PATTERN', '') %}
-
 with artists as (
 
     select * from {{ ref('stg_artists') }}
@@ -51,14 +49,20 @@ derived as (
 
         lower(unaccent(btrim(a.artist_name))) as name_norm,
 
-        a.artist_id || '-' || coalesce(
-            nullif(
-                regexp_replace(
-                    regexp_replace(lower(unaccent(btrim(a.artist_name))),
-                    '[^[:alnum:]]+', '-', 'g'), '^-+|-+$', '', 'g'
-                ),
-            ''),
-        'artist') as slug,
+        {{ display_name('a.artist_name') }} as display_name,
+
+        -- Slugs are public URLs, so an unsafe name must not survive into one.
+        case when {{ is_display_safe('a.artist_name') }} then
+            a.artist_id || '-' || coalesce(
+                nullif(
+                    regexp_replace(
+                        regexp_replace(lower(unaccent(btrim(a.artist_name))),
+                        '[^[:alnum:]]+', '-', 'g'), '^-+|-+$', '', 'g'
+                    ),
+                ''),
+            'artist')
+        else a.artist_id || '-redacted'
+        end as slug,
 
         case
             when s.starting_listeners >= 1000000 then '1M+'
@@ -80,11 +84,7 @@ derived as (
             else                                      1
         end as size_band_sort,
 
-        {% if profanity_pattern %}
-            not (a.artist_name ~* '{{ profanity_pattern }}') as is_display_safe
-        {% else %}
-            true as is_display_safe
-        {% endif %}
+        {{ is_display_safe('a.artist_name') }} as is_display_safe
 
     from artists a
     join snapshot_agg s on a.artist_id = s.artist_id
@@ -97,6 +97,7 @@ final as (
     select
         artist_id,
         artist_name,
+        display_name,
         mbid,
         name_norm,
         slug,
