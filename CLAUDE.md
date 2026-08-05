@@ -25,7 +25,7 @@ web/       Next.js app — not yet created
 ## Where the work is
 The pipeline (ingestion, marts, analyses, weekly automation, Power BI) is complete. Current work is the public web app — see `docs/webapp-implementation-plan.md` for Stages A–E.
 
-**Now:** Stage A5b is **complete** — all 7 `dbt/models/api/` models are built and tested (2026-08-05). Next is Stage C: the Next.js app. Stages C/D/E (Next.js, frontend, Vercel) not started.
+**Now:** Stage A is **complete** — all 7 `dbt/models/api/` models built and tested, and `app_readonly` grants verified against the live DB after a rebuild (2026-08-05). Next is Stage C: the Next.js app. Stages C/D/E (Next.js, frontend, Vercel) not started.
 
 ## File Guide
 Only entries with something non-obvious about them. Everything else is named for what it does.
@@ -84,8 +84,8 @@ The first two snapshot dates are **not** weekly runs and must be excluded from a
 
 Known consequence: `listener_growth.sql` drops only the global min date, so the 7,751 artists with an 04-27 row get one 13-day delta labelled as a week at 05-10. Narrow (one week, one cohort); slightly affects `average_listener_pct`. Not fixed — changing it would move published numbers.
 
-## ⚠ Open issue to pick up first
-The live portfolio site is publishing a `growth_by_tier` block (indie 3.42 · mainstream 2.76 · **unranked** 1.42) that contradicts the size-quintile finding in the README. It shipped in `27c9aa6` and re-publishes on every nightly rebuild. Fix options are written up as Issue #1 in `docs/findings.md`.
+## Portfolio stats block
+`pipeline/generate_stats.py` publishes `growth_by_size_quintile` (median 2.67 / 2.46 / 2.10 / 1.76 / 1.71), computed inline against `stg_artist_snapshots` bounded at `SERIES_START_DATE = '2026-05-10'` so it reproduces the README exactly. **Do not recompute it from `artist_growth_summary`** — that mart's window yields 2.77 / 2.52 / … , numbers the README doesn't contain. The earlier `growth_by_tier` block contradicted the README and was removed 2026-08-05; see Issue #1 in `docs/findings.md`. `min_page` was dropped from `top_growing_artists` at the same time — it sat next to a fastest-growers list and implied the retracted page-depth claim.
 
 ## Findings — headline only
 Median total growth falls monotonically with artist size, by **starting**-listener quintile: 2.67% / 2.46% / 2.10% / 1.76% / 1.71% (smallest → largest, 13 weeks, 22,201 artists). Verified 2026-08-03 and published in README. The earlier "growth increases with chart page depth" claim is **retracted** — do not restate it. Caveat on everything: listener counts are cumulative all-time, so "growth" means new scrobblers, not active listeners. Full detail and the open data-quality issues live in `docs/findings.md`.

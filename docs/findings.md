@@ -21,19 +21,17 @@ Detail behind the summaries in CLAUDE.md. Not loaded into agent context by defau
 
 ## Data-Quality Issues (all re-measured 2026-08-03)
 
-1. **🔴 LIVE ON THE PORTFOLIO — was a pending decision, now shipped. Pick up here.**
+1. **Resolved (2026-08-05).** Took option 1 below.
 
-   The weekly workflow ran on 2026-08-02 (commit `27c9aa6`) and pushed a `data/pipeline_stats.json` containing a three-tier `growth_by_tier` block: **indie 3.42% · mainstream 2.76% · unranked 1.42%**. deanslist.dev fetches that file and rebuilds nightly at 3:30am UTC, so those tiers are on the public site.
+   The problem: the weekly workflow ran on 2026-08-02 (commit `27c9aa6`) and pushed a `data/pipeline_stats.json` containing a three-tier `growth_by_tier` block — **indie 3.42% · mainstream 2.76% · unranked 1.42%**. deanslist.dev fetches that file and rebuilds nightly at 3:30am UTC, so those tiers were on the public site, and they **contradicted the README**: the site showed the *smallest* cohort (`unranked`, median listeners 122k, below indie's 322k) growing *slowest*, against the README's monotonic size-quintile finding. Compounding it, `unranked` is not a size band at all but an observation gap (see Issue #2) — presenting it as a peer of indie/mainstream implied a hierarchy that doesn't exist.
 
-   Two problems with that, in order of severity:
-   - It **contradicts the README**, which now publishes the size-quintile finding (smaller artists grow faster, monotonic). The site shows a tier ordering where the *smallest* cohort — `unranked`, median listeners 122k, below indie's 322k — grows *slowest*. A reader comparing the two comes away thinking the analysis is unstable.
-   - `unranked` is **not a size band, it is an observation gap** (see Issue #2). It means "we never saw this artist on the chart," which mixes genuinely tiny artists with mid-sized ones the chart scrape simply missed. Presenting it as a peer of indie/mainstream implies a hierarchy that doesn't exist.
+   **Fix applied.** `pipeline/generate_stats.py` now emits `growth_by_size_quintile` in place of `growth_by_tier`, reproducing `dbt/analyses/growth_by_listener_quintile.sql` inline against `stg_artist_snapshots` bounded at `SERIES_START_DATE = '2026-05-10'`. Output matches the published README figures exactly: median 2.67 / 2.46 / 2.10 / 1.76 / 1.71, with `band_min`/`band_max` carried through so the site can label rows by listener range rather than by quintile number.
 
-   **Fix — two options, both small. First is recommended:**
-   1. Change `pipeline/generate_stats.py` to emit listener quintiles in place of `growth_by_tier`, reusing `dbt/analyses/growth_by_listener_quintile.sql`. Site then agrees with the README and shows the defensible finding. Requires a matching tweak wherever deanslist.dev renders that block.
-   2. Drop `unranked` from the tier block, leaving indie/mainstream. One-line change, no site edit, but keeps a framing the README has already moved away from.
+   ⚠ **Do not compute this from `artist_growth_summary`.** It's the tempting shortcut — the mart already has `starting_count` and `total_pct_growth`, so it's a one-line `ntile(5)` — but it inherits `listener_growth`'s window, which keeps the 05-03 snapshot and the 04-27→05-10 13-day delta labelled as a week. It yields 2.77 / 2.52 / 2.14 / 1.79 / 1.77: same direction and monotonicity, but numbers the README doesn't contain, which is a milder version of the bug being fixed here.
 
-   Either way the file republishes on the next weekly run, so the fix sticks without a manual backfill. Until then, every nightly rebuild reasserts it.
+   Also dropped in the same change: `min_page` on the `top_growing_artists` rows. It was chart-page depth sitting next to a fastest-growers list, one inference away from the retracted page-depth claim. The list is still filtered to indie artists with >5,000 starting listeners — site copy must say so, or a reader assumes it spans all 22k.
+
+   **Residual, not yet decided.** The README publishes *frozen* numbers verified 2026-08-03; the site now recomputes weekly and will drift (2.67 → 2.68 → …). Not a contradiction — direction and monotonicity are stable — but the site should render the window (`2026-05-10 → {latest_snapshot}, recomputed weekly`) so a reader knows why it doesn't match the README to two decimals.
 2. **Fix built, not yet applied.** `unranked` spans 1 → 5,540,679 listeners (median 122k, *below* indie's 322k), confirming it is an observation gap, not a size band. `int_artist_base` already ships `listener_percentile` and `size_band`. Remaining work is a design decision: `api_cohort_weekly` must cohort on `size_band`, never `tier`.
 3. **Open (Stage B).** Similarity coverage is an inverted U, not a decline with depth: pages 1-250 = **0.1%**, 251-750 = 26.6%, 751-1250 = 31.0%, 1251-1750 = 17.4%, 1751-2000 = 12.4%, unranked = 0%. Only 1,986 of 9,808 charted artists have outgoing edges; 7,822 still need seeding. **Display side mitigated 2026-08-05:** `api_artist_similar` unions both edge directions, so 14,325 artists now show a similar-artists table instead of 1,982. The seeding gap itself is unchanged — symmetrising redistributes the edges we have, it does not create new ones.
 4. **Open (Stage B).** Genre coverage 6,829 of 22,207 (30.8%). `tags` is still empty (0 rows).
