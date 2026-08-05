@@ -78,7 +78,7 @@ joined as (
 
     select
         b.artist_id,
-        b.artist_name,
+        b.display_name,
         b.mbid,
         b.name_norm,
         b.slug,

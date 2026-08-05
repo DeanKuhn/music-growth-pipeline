@@ -53,6 +53,12 @@ models:
         description: lower(unaccent(btrim(name))). Search/match key.
         tests:
           - not_null
+      - name: display_name
+        description: >
+          Name as published. '[redacted]' when the artist fails the profanity
+          filter — the raw name is not exposed by any api model.
+        tests:
+          - not_null
       - name: is_display_safe
         description: False when the name matches PROFANITY_PATTERN.
         tests:
@@ -80,3 +86,86 @@ models:
           is null.
       - name: pct_rank_in_genre
         description: Null when the artist has no genre rows.
+
+  - name: api_artist_search
+    description: >
+      One row per searchable artist. Backs GET /api/search — matched on
+      name_norm via pg_trgm (typos) or a text_pattern_ops prefix scan (queries
+      too short to produce trigrams), ordered by latest_listeners. Artists
+      failing the profanity filter are excluded, so nothing unsafe can
+      autocomplete.
+    columns:
+      - name: artist_id
+        tests:
+          - unique
+          - not_null
+      - name: slug
+        description: Matches api_artist_profile.slug — every hit resolves.
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('api_artist_profile')
+              field: slug
+      - name: display_name
+        description: >
+          Always the real name here: unsafe artists are filtered out of this
+          model rather than redacted.
+        tests:
+          - not_null
+      - name: name_norm
+        description: lower(unaccent(btrim(name))). The indexed match column.
+        tests:
+          - not_null
+      - name: latest_listeners
+        description: Most recent snapshot's listener count. Ranking key.
+        tests:
+          - not_null
+      - name: size_band
+        tests:
+          - not_null
+
+  - name: api_cohort_weekly
+    description: >
+      One row per cohort per week. Backs the comparison line on an artist page
+      (GET /api/artists/[slug]/compare), joined against api_artist_timeseries
+      on snapshot_date. Cohorts smaller than min_cohort_size (default 20) are
+      dropped. Grain is asserted by tests/assert_api_cohort_weekly_grain.sql.
+    columns:
+      - name: cohort_type
+        description: >
+          size_band | genre | all. Deliberately no 'tier' — unranked is an
+          observation gap, not a size band.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['size_band', 'genre', 'all']
+      - name: cohort_key
+        description: The band name, genre name, or the literal 'all'.
+        tests:
+          - not_null
+      - name: week_number
+        description: >
+          1-based week within this cohort's own series, not the artist's.
+        tests:
+          - not_null
+      - name: artist_count
+        description: Artists contributing to this cohort-week.
+        tests:
+          - not_null
+      - name: median_indexed
+        description: >
+          Median listeners_indexed — every artist rebased to 100 at their
+          first week, so cohorts of very different size are comparable.
+        tests:
+          - not_null
+      - name: p25_indexed
+        tests:
+          - not_null
+      - name: p75_indexed
+        tests:
+          - not_null
+      - name: median_pct_change
+        description: >
+          Median week-over-week percent change (median of the changes, not the
+          change in the median). Null in week 1.

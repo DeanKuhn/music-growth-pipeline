@@ -15,10 +15,10 @@
 > **Known doc issue:** this progress block's step labels (A0–A3, `app_readonly`) don't match the Stage A body below (A0–A5, with `app_readonly` under Security, not numbered). Not reconciled yet — go by what's actually in the DB (queries above), not the label numbers, until this is cleaned up.
 >
 > **Next — `dbt/models/api/` serving layer** (the body's A4):
-> 1. ⬜ `api_artist_timeseries`
-> 2. ⬜ `api_artist_profile`
-> 3. ⬜ `api_artist_search`
-> 4. ⬜ `api_cohort_weekly`
+> 1. ✅ `api_artist_timeseries`
+> 2. ✅ `api_artist_profile`
+> 3. ✅ `api_artist_search` — 22,154 rows (22,201 profiles minus 47 unsafe names), 5 indexes incl. `gin (name_norm gin_trgm_ops)`, verified in Neon 2026-08-05
+> 4. ✅ `api_cohort_weekly` — 299 rows: `all` (1) + `size_band` (7) + `genre` (15) × 13 weeks. Cohorted on `size_band` per revision 2. Built on a **fixed panel** (artists whose series starts 2026-05-10); without it the ~470 later-seeded artists entered at indexed=100 in the final week and pulled its median down 102.11 → 102.06, which reads as a growth slowdown but is composition drift. Genres below `min_cohort_size` (20) are dropped — 15 of them survive.
 > 5. ⬜ `api_artist_similar`
 > 6. ⬜ `api_leaderboard`
 > 7. ⬜ `api_pipeline_health`
@@ -36,7 +36,7 @@
 > 3. Neon is at 53 MB of ~0.5 GiB, not near the limit. The storage-crunch risk is ~a year further out than estimated; `CONCURRENTLY` is unnecessary at this size.
 > 4. Stage A2's "handle collisions" step turned out to be unnecessary — all 36,468 duplicate snapshot rows were byte-identical, so losers were deleted rather than merged.
 > 5. **`size_band` cut points, chosen from the actual listener histogram** (log-decade bands put 62.5% of artists in one bucket): `<10k` / `10k-50k` / `50k-100k` / `100k-250k` / `250k-500k` / `500k-1M` / `1M+`, keyed off each artist's *first* observation so cohort membership never drifts as an artist grows. `listener_percentile` (in `int_artist_base`) is the separate, *latest*-listeners display stat — the two are intentionally asymmetric.
-> 6. `dbt run`/`dbt build` need `PROFANITY_PATTERN` exported into the shell (`env_var()` reads the process env, not `.env`) — CI's `Run dbt` step now sets it explicitly. `.env` values containing shell metacharacters (`|`, `&`, etc.) must be quoted or `source`/`set -a` mis-parses them; this silently defeated the profanity filter once already.
+> 6. `dbt run`/`dbt build` need `PROFANITY_PATTERN` exported into the shell (`env_var()` reads the process env, not `.env`) — CI's `Run dbt` step now sets it explicitly. `.env` values containing shell metacharacters (`|`, `&`, etc.) must be quoted or `source`/`set -a` mis-parses them; this silently defeated the profanity filter once already. **Resolved 2026-08-05:** it can no longer fail silently — `dbt/macros/profanity.sql` raises a compiler error when the variable is unset, so a missed export stops the build instead of marking every name safe. Redaction now happens once in `int_artist_base` (`display_name` + a `<id>-redacted` slug, so profanity never reaches a URL); API models expose `display_name` only, and `api_artist_search` drops unsafe artists outright.
 >
 > See `CLAUDE.md` § *Open Data-Quality Issues* for the six unresolved items.
 
