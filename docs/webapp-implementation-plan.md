@@ -1,6 +1,14 @@
 # Plan: Public interactive artist-growth app + ingestion scale-up
 
-> ## PROGRESS — last updated 2026-08-03
+> ## PROGRESS — last updated 2026-08-05
+>
+> **Stage A is COMPLETE.** All of A0–A5 plus the `api/` serving layer are built, tested, and verified against the live DB. Next work is Stage C (Next.js).
+>
+> **Grants verified 2026-08-05** — the footgun in the Security section is closed. Connecting as `app_readonly` after the latest `dbt build`: all 7 `api_*` tables and all 7 marts are selectable (14 relations, row counts as listed below), a write attempt is rejected with `permission denied for schema public`, and both role-level guardrails are live (`statement_timeout=5s`, `idle_in_transaction_session_timeout=10s`). The declarative `+grants` config in `dbt_project.yml` is doing its job across rebuilds.
+>
+> **Step labels reconciled 2026-08-05.** The old note here flagged that this block's labels (A0–A3) didn't match the body's (A0–A5, with `app_readonly` under Security). Resolved by treating the body as authoritative: A0 diagnostics · A1 extensions+indexes · A2 mart coverage fixes · A3 flip to tables · A4 `api/` serving layer · A5 Neon free-tier constraints. The `app_readonly` role was pulled forward from Security to unblock A3's `+grants`, since the declarative config needs the role to exist. "A5b" in older notes means the `api/` model set, i.e. A4.
+>
+> **Issue #1 fixed 2026-08-05** — `pipeline/generate_stats.py` emits `growth_by_size_quintile` instead of `growth_by_tier`, so the portfolio site stops contradicting the README. `min_page` dropped from `top_growing_artists` in the same change. Details and the residual README-drift question in `docs/findings.md` Issue #1.
 >
 > **Done:** A0 (diagnostics) · A1 (extensions, 4 indexes, `tags` DDL) · A2 (dedupe + `pipeline/db.py`/`pipeline/lastfm.py` + `ux_artists_name_norm`, fix marts to left-join/first-last-by-date) · A3 (marts + `int_artist_base` materialized for real via `dbt build` — see verification below) · `app_readonly` role created (pulled forward from the Security section to unblock A3's `+grants`, since the declarative grants config depends on the role existing)
 >
@@ -11,8 +19,6 @@
 > - `is_display_safe` tested against the actual rendered SQL (both python-dotenv and `source .env; set -a` loading paths) — no quoting corruption from `PROFANITY_PATTERN`; 47 artists flagged unsafe (was noted as 46, off by one — plausibly a new artist since).
 > - `size_band` histogram is well-distributed across all 7 bands, confirming revision 5's fix.
 > - `app_readonly`: created, granted `SELECT` on all tables + `statement_timeout`/`idle_in_transaction_session_timeout`, connection string saved to `.env` as `DATABASE_URL_READONLY`. Confirmed it can read `artist_tiers` and a write attempt is rejected with `permission denied`.
->
-> **Known doc issue:** this progress block's step labels (A0–A3, `app_readonly`) don't match the Stage A body below (A0–A5, with `app_readonly` under Security, not numbered). Not reconciled yet — go by what's actually in the DB (queries above), not the label numbers, until this is cleaned up.
 >
 > **Next — `dbt/models/api/` serving layer** (the body's A4):
 > 1. ✅ `api_artist_timeseries`

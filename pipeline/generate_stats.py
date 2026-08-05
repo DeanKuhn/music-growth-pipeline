@@ -11,6 +11,8 @@ _pattern_str = os.getenv('PROFANITY_PATTERN', '')
 PROFANITY_PATTERN = re.compile(r'(' + _pattern_str + r')', re.IGNORECASE) \
     if _pattern_str else None
 
+SERIES_START_DATE = '2026-05-10'
+
 def sanitize_name(name):
     if PROFANITY_PATTERN and PROFANITY_PATTERN.search(name):
         return '[redacted]'
@@ -38,32 +40,69 @@ cur.execute("""
 row = cur.fetchone()
 stats['summary']['latest_snapshot'] = row[0] # type:ignore
 
-# --- GROWTH BY TIER ---
-cur.execute("""
+# --- GROWTH BY SIZE QUINTILE ---
+query = """
+    with bounded as (
+        select artist_id, listeners, snapshot_date
+        from stg_artist_snapshots
+        where snapshot_date >= %s
+    ),
+
+    agg as (
+        select
+            artist_id,
+            (array_agg(listeners order by snapshot_date asc ))[1]
+                as starting_listeners,
+            (array_agg(listeners order by snapshot_date desc))[1]
+                as latest_listeners
+        from bounded
+        group by artist_id
+    ),
+
+    growth as (
+        select
+            starting_listeners,
+            100.0 * (latest_listeners - starting_listeners) / starting_listeners
+                as total_pct_growth,
+            ntile(5) over (order by starting_listeners) as listener_quintile
+        from agg
+        where starting_listeners > 0
+    )
+
     select
-        tier,
-        count(*) as artist_count,
+        listener_quintile,
+        count(*) as artists,
+        min(starting_listeners) as band_min,
+        max(starting_listeners) as band_max,
+
         round(avg(total_pct_growth), 2) as avg_pct_growth,
+
         round(
             percentile_cont(0.5)
                 within group (order by total_pct_growth)::numeric, 2
         ) as median_pct_growth,
+
         round(
             percentile_cont(0.9)
                 within group (order by total_pct_growth)::numeric, 2
         ) as p90_pct_growth
-    from artist_growth_summary
-    where weeks_tracked >= 6
-    group by tier
-    order by tier
-""")
+
+    from growth
+    group by listener_quintile
+    order by listener_quintile
+"""
+cur.execute(query, (SERIES_START_DATE,))
+
 rows = cur.fetchall()
-stats['growth_by_tier'] = [
+stats['growth_by_size_quintile'] = [
     {
-        'tier': row[0],
-        'artist_count': row[1],
-        'median_pct_growth': float(row[3]),
-        'p90_pct_growth': float(row[4])
+        'quintile': int(row[0]),
+        'artist_count': int(row[1]),
+        'band_min': int(row[2]),
+        'band_max': int(row[3]),
+        'avg_pct_growth': float(row[4]),
+        'median_pct_growth': float(row[5]),
+        'p90_pct_growth': float(row[6])
     }
     for row in rows
 ]
@@ -72,7 +111,6 @@ stats['growth_by_tier'] = [
 cur.execute("""
     select
         artist_name,
-        min_page,
         starting_count,
         ending_count,
         total_pct_growth
@@ -87,10 +125,9 @@ rows = cur.fetchall()
 stats['top_growing_artists'] = [
     {
         'artist_name': sanitize_name(row[0]),
-        'min_page': row[1],
-        'starting_count': row[2],
-        'ending_count': row[3],
-        'total_pct_growth': float(row[4])
+        'starting_count': row[1],
+        'ending_count': row[2],
+        'total_pct_growth': float(row[3])
     }
     for row in rows
 ]
