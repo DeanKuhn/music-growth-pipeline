@@ -18,7 +18,7 @@ where artist_id = $1
 order by snapshot_date asc
 `;
 
-export const SQL_COMPARE_GENRE_TIER = `
+export const SQL_COMPARE_GENRE_SIZEBAND = `
 select
   ts.snapshot_date, ts.week_number, ts.listeners, ts.listeners_indexed,
   cw.artist_count, cw.p25_indexed, cw.median_indexed, cw.p75_indexed
@@ -57,7 +57,7 @@ order by ts.snapshot_date asc
 
 export const SQL_SIMILAR = `
 select
-  similar_artist_id, slug, display_name, tier, size_band,
+  similar_artist_id, slug, display_name, size_band,
   latest_listeners, total_pct_growth, weeks_tracked, similarity_score, rank
 from api_artist_similar
 where artist_id = $1
@@ -65,7 +65,7 @@ order by rank asc
 `;
 
 export const SQL_SEARCH = `
-select artist_id, slug, display_name, tier, size_band,
+select artist_id, slug, display_name, size_band,
        latest_listeners, listener_percentile, weeks_tracked,
        similarity(name_norm, $1) as score
 from api_artist_search

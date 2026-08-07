@@ -80,7 +80,7 @@ tags                 — per-artist tags with weight. EMPTY — Stage B.
 - Global weekly charts don't exist — `user.getWeeklyArtistChart` is per-user only.
 
 ## Current Data (2026-08-03)
-- **22,207 artists**; 9,808 charted (250 mainstream pages 1-50, 9,558 indie pages 51-2000); **12,399 unranked** — seeded via genre tags or the similarity graph, below the top 10,000, so they have listener history but no chart position.
+- **22,207 artists**; 9,808 charted (250 in pages 1-50, 9,558 in pages 51-2000); **12,399 unranked** — seeded via genre tags or the similarity graph, below the top 10,000, so they have listener history but no chart position.
 - 15 snapshot dates 2026-04-27 → 2026-08-02; 21,717 artists have all 13 of the true weekly runs.
 - `weekly_charts` holds two snapshot_dates: 2026-04-27 (pages 1-50, 500-2000) and 2026-07-31 (pages 51-499). 192 artists appear on two pages — the chart shifted between scrapes.
 - ~53 MB of Neon's ~0.5 GiB free tier.

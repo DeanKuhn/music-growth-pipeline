@@ -84,7 +84,6 @@ joined as (
         b.slug,
         b.is_display_safe,
 
-        t.tier,
         t.min_page,
         t.global_rank,
 
@@ -106,7 +105,7 @@ joined as (
         g.avg_weekly_pct_change
 
     from base b
-    left join {{ ref('artist_tiers') }} t using (artist_id)
+    left join {{ ref('artist_chart_position') }} t using (artist_id)
     left join growth g using (artist_id)
     left join artist_genres ag using (artist_id)
 

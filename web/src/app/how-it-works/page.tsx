@@ -31,7 +31,7 @@ const DAG_LAYERS: { layer: string; models: { name: string; path: string; note: s
     layer: 'marts',
     models: [
       { name: 'artist_growth_summary', path: 'dbt/models/marts/artist_growth_summary.sql', note: 'first/last listener counts, total growth' },
-      { name: 'artist_tiers', path: 'dbt/models/marts/artist_tiers.sql', note: 'mainstream / indie / unranked, left-joined so ~17k uncharted artists still get a profile' },
+      { name: 'artist_chart_position', path: 'dbt/models/marts/artist_chart_position.sql', note: 'raw chart page/rank stats, left-joined so ~17k uncharted artists still get a profile — not used for size classification' },
       { name: 'listener_growth', path: 'dbt/models/marts/listener_growth.sql', note: 'week-over-week deltas' },
       { name: 'genre_stats', path: 'dbt/models/marts/genre_stats.sql', note: 'per-genre aggregates' },
     ],
@@ -121,11 +121,13 @@ export default async function HowItWorksPage() {
             starting size, not chart depth, is what predicts higher growth.
           </p>
           <p>
-            <strong>Chart survivorship:</strong> the mainstream/indie split comes from a chart snapshot that is
-            now fully seeded (all 10,000 ranked artists), but the remaining ~17,000 tracked artists were seeded via
-            genre tags or the similarity graph and never had a chart position — &quot;unranked&quot; is an
-            observation gap, not a popularity tier, which is why cohorts here are built on listener-size bands
-            rather than chart tier.
+            <strong>Size is measured by listeners, not chart position:</strong> Last.fm&apos;s chart reflects
+            recent scrobble activity, not artist size, so a well-known artist can rank low (or not chart at all)
+            while a currently-buzzing small artist ranks high. Cohorts and size labels here are built on
+            <code>size_band</code> — each artist&apos;s own listener count — never chart position. Raw chart
+            page/rank is still tracked (<code>artist_chart_position</code>) but only as a separate stat, not a
+            classification. Chart seeding is also incomplete for the deepest pages: the remaining ~17,000 tracked
+            artists were seeded via genre tags or the similarity graph and never had a chart position at all.
           </p>
           <p>
             <strong>Self-reported tags:</strong> genres come from Last.fm user tagging, not a curated taxonomy —

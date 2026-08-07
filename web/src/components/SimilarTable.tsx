@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { SimilarArtist } from '@/lib/api';
-import { formatListeners, formatPct, formatTier } from '@/lib/format';
+import { formatListeners, formatPct } from '@/lib/format';
 
 // A true per-row sparkline needs that artist's own weekly series — 20 extra
 // timeseries queries per page view, which defeats the point of a serving
@@ -51,7 +51,7 @@ export function SimilarTable({ similar }: { similar: SimilarArtist[] }) {
         <thead>
           <tr className="muted" style={{ fontSize: 12, textAlign: 'left' }}>
             <th style={{ padding: '6px 8px' }}>Artist</th>
-            <th style={{ padding: '6px 8px' }}>Tier</th>
+            <th style={{ padding: '6px 8px' }}>Size band</th>
             <th style={{ padding: '6px 8px' }}>Listeners</th>
             <th style={{ padding: '6px 8px' }}>13-week growth</th>
           </tr>
@@ -65,7 +65,7 @@ export function SimilarTable({ similar }: { similar: SimilarArtist[] }) {
                 </Link>
               </td>
               <td style={{ padding: '8px' }} className="secondary">
-                {formatTier(s.tier)}
+                {s.size_band ?? '—'}
               </td>
               <td style={{ padding: '8px' }} className="tabular">
                 {formatListeners(s.latest_listeners)}

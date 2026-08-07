@@ -33,7 +33,7 @@ export default async function GenresPage() {
               <th style={{ padding: '10px 12px' }}>Genre</th>
               <th style={{ padding: '10px 12px' }}>Artists</th>
               <th style={{ padding: '10px 12px' }}>Avg listeners</th>
-              <th style={{ padding: '10px 12px' }}>Mainstream / Indie</th>
+              <th style={{ padding: '10px 12px' }}>Small / Large</th>
               <th style={{ padding: '10px 12px' }}>Median 13-wk growth</th>
             </tr>
           </thead>
@@ -55,7 +55,7 @@ export default async function GenresPage() {
                   {formatListeners(g.avg_listeners)}
                 </td>
                 <td className="tabular secondary" style={{ padding: '10px 12px' }}>
-                  {g.mainstream_count} / {g.indie_count}
+                  {g.small_count} / {g.large_count}
                 </td>
                 <td className="tabular" style={{ padding: '10px 12px' }}>
                   {formatPct(g.median_total_pct_growth, { signed: true })}

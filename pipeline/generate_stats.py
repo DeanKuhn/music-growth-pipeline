@@ -115,7 +115,7 @@ cur.execute("""
         ending_count,
         total_pct_growth
     from artist_growth_summary
-    where tier = 'indie'
+    where size_band_sort <= 4
         and weeks_tracked >= 6
         and starting_count > 5000
     order by total_pct_growth desc

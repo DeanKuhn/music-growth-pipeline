@@ -21,15 +21,15 @@ final as (
             avg(ls.playcount::numeric / ls.listeners), 2
         ) as avg_plays_per_listener,
         count(
-            distinct case when at.tier = 'mainstream' then ga.artist_id end
-        ) as mainstream_count,
+            distinct case when b.size_band_sort >= 5 then ga.artist_id end
+        ) as large_count,
         count(
-            distinct case when at.tier = 'indie' then ga.artist_id end
-        ) as indie_count
+            distinct case when b.size_band_sort < 5 then ga.artist_id end
+        ) as small_count
 
     from {{ ref('stg_genres') }} g
     join {{ ref('stg_genre_artists') }} ga on g.genre_id = ga.genre_id
-    join {{ ref('artist_tiers') }} at on ga.artist_id = at.artist_id
+    join {{ ref('int_artist_base') }} b on ga.artist_id = b.artist_id
     join latest_snapshots ls on ga.artist_id = ls.artist_id
     group by g.genre_id, g.genre
     order by avg_listeners desc

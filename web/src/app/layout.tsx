@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: '%s — Music Growth',
   },
   description:
-    'Longitudinal listener growth for independent artists on Last.fm — search an artist, compare it to its genre, tier, or similar artists.',
+    'Longitudinal listener growth for independent artists on Last.fm — search an artist, compare it to its genre, size band, or similar artists.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

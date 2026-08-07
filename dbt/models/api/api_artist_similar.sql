@@ -66,7 +66,6 @@ joined as (
 
         p.slug,
         p.display_name,
-        p.tier,
         p.size_band,
         p.latest_listeners,
         p.total_pct_growth,

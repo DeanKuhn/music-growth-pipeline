@@ -38,8 +38,8 @@ final as (
         s.artist_count,
         s.avg_listeners,
         s.avg_plays_per_listener,
-        s.mainstream_count,
-        s.indie_count,
+        s.small_count,
+        s.large_count,
 
         g.avg_total_pct_growth,
         g.median_total_pct_growth,

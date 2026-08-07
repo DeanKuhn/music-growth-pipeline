@@ -32,7 +32,6 @@ final as (
         b.display_name,
         b.name_norm,
 
-        t.tier,
         b.size_band,
         b.size_band_sort,
 
@@ -41,7 +40,6 @@ final as (
         b.weeks_tracked
 
     from base b
-    left join {{ ref('artist_tiers') }} t using (artist_id)
 
 )
 

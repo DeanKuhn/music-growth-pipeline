@@ -96,6 +96,12 @@
       "total_pct_growth": 180.05
     },
     {
+      "artist_name": "dodree",
+      "starting_count": 7669,
+      "ending_count": 20127,
+      "total_pct_growth": 162.45
+    },
+    {
       "artist_name": "El De Las R's",
       "starting_count": 62367,
       "ending_count": 153282,
@@ -106,12 +112,6 @@
       "starting_count": 17624,
       "ending_count": 41875,
       "total_pct_growth": 137.6
-    },
-    {
-      "artist_name": "Cloudside",
-      "starting_count": 14293,
-      "ending_count": 33662,
-      "total_pct_growth": 135.51
     }
   ],
   "genre_growth": [

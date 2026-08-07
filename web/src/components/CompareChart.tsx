@@ -16,19 +16,19 @@ import {
 import type { CompareResponse } from '@/lib/api';
 import { formatDate } from '@/lib/format';
 
-const TABS: { key: 'genre' | 'tier' | 'similar'; label: string }[] = [
+const TABS: { key: 'genre' | 'size_band' | 'similar'; label: string }[] = [
   { key: 'genre', label: 'vs Genre' },
-  { key: 'tier', label: 'vs Size tier' },
+  { key: 'size_band', label: 'vs Size band' },
   { key: 'similar', label: 'vs Similar artists' },
 ];
 
 export function CompareChart({
   data,
 }: {
-  data: Record<'genre' | 'tier' | 'similar', CompareResponse | null>;
+  data: Record<'genre' | 'size_band' | 'similar', CompareResponse | null>;
 }) {
   const available = TABS.filter((t) => data[t.key] && data[t.key]!.series.length > 0);
-  const [active, setActive] = useState<'genre' | 'tier' | 'similar'>(available[0]?.key ?? 'genre');
+  const [active, setActive] = useState<'genre' | 'size_band' | 'similar'>(available[0]?.key ?? 'genre');
   const current = data[active];
 
   if (available.length === 0) return null;

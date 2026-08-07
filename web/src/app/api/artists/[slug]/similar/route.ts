@@ -23,7 +23,6 @@ async function handler(req: NextRequest, { params }: RouteContext) {
         similar_artist_id,
         slug,
         display_name,
-        tier,
         size_band,
         latest_listeners,
         total_pct_growth,

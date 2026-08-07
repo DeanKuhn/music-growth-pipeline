@@ -20,11 +20,11 @@ import { SqlDisclosure } from '@/components/SqlDisclosure';
 import {
   SQL_PROFILE,
   SQL_TIMESERIES,
-  SQL_COMPARE_GENRE_TIER,
+  SQL_COMPARE_GENRE_SIZEBAND,
   SQL_COMPARE_SIMILAR,
   SQL_SIMILAR,
 } from '@/lib/sql-snippets';
-import { formatListeners, formatPct, formatTier, formatDate } from '@/lib/format';
+import { formatListeners, formatPct, formatDate } from '@/lib/format';
 
 export const revalidate = 3600;
 
@@ -49,7 +49,7 @@ export async function generateMetadata({
       title: profile.display_name,
       description: `Listener growth for ${profile.display_name} on Last.fm — ${formatListeners(
         profile.latest_listeners
-      )} listeners, ${formatTier(profile.tier)} tier.`,
+      )} listeners, size band ${profile.size_band ?? '—'}.`,
     };
   } catch {
     return { title: 'Artist' };
@@ -72,23 +72,22 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
     throw err;
   }
 
-  const [timeseries, similar, compareGenre, compareTier, compareSimilar] = await Promise.all([
+  const [timeseries, similar, compareGenre, compareSizeBand, compareSimilar] = await Promise.all([
     getArtistTimeseries(slug).catch(() => ({ artist_id: profile.artist_id, series: [] })),
     getArtistSimilar(slug).catch(() => ({ artist_id: profile.artist_id, similar: [] })),
     getArtistCompare(slug, 'genre').catch((): CompareResponse | null => null),
-    getArtistCompare(slug, 'tier').catch((): CompareResponse | null => null),
+    getArtistCompare(slug, 'size_band').catch((): CompareResponse | null => null),
     getArtistCompare(slug, 'similar').catch((): CompareResponse | null => null),
   ]);
 
-  const compareData = { genre: compareGenre, tier: compareTier, similar: compareSimilar };
+  const compareData = { genre: compareGenre, size_band: compareSizeBand, similar: compareSimilar };
 
   return (
     <div className="container" style={{ paddingTop: 32, paddingBottom: 40 }}>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: 28, margin: '0 0 6px' }}>{profile.display_name}</h1>
         <div className="secondary" style={{ fontSize: 14, marginBottom: 10 }}>
-          {formatTier(profile.tier)}
-          {profile.size_band && <> · {profile.size_band} listeners</>}
+          {profile.size_band && <>{profile.size_band} listeners</>}
           {profile.global_rank && <> · chart rank #{profile.global_rank}</>}
         </div>
         <GenreChips genres={profile.genres} />
@@ -123,7 +122,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
             <CompareChart data={compareData} />
             <SqlDisclosure
               label="cohort comparison"
-              sql={compareData.similar?.series.length ? SQL_COMPARE_SIMILAR : SQL_COMPARE_GENRE_TIER}
+              sql={compareData.similar?.series.length ? SQL_COMPARE_SIMILAR : SQL_COMPARE_GENRE_SIZEBAND}
             />
           </section>
 
