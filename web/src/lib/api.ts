@@ -4,6 +4,13 @@
 // duplicate that SQL.
 
 function getBaseUrl(): string {
+  // SITE_URL, not VERCEL_URL: Vercel's Deployment Protection blocks
+  // unauthenticated requests to every *.vercel.app hostname by default —
+  // custom domains are exempt, but VERCEL_URL always points to a protected
+  // one. A self-fetch through it gets redirected to Vercel's login page
+  // instead of the JSON it asked for, and JSON.parse() on that HTML throws.
+  // Set SITE_URL to the public custom domain in Vercel's env vars.
+  if (process.env.SITE_URL) return process.env.SITE_URL;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
