@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 import { assertReadonlyRole } from './db';
 import { serverError } from './errors';
 
@@ -51,13 +53,47 @@ class MemoryLimiter implements RateLimiter {
 
 const memoryLimiter = new MemoryLimiter();
 
-// Single swap point for Upstash: once UPSTASH_REDIS_REST_URL/TOKEN exist,
-// replace this function's body with an @upstash/ratelimit-backed limiter
-// (sliding window, 30/60s) and wrap its .limit() call in the same try/catch
-// pattern used in withRateLimit below, so a Redis error still falls open to
-// memoryLimiter rather than taking the site down.
+// Wraps @upstash/ratelimit so a Redis error surfaces as a thrown exception
+// (the interface withRateLimit's try/catch already expects) instead of
+// however the underlying client fails. A small in-process ephemeralCache
+// means an IP that's already over the limit gets denied without a Redis
+// round trip on every retry, which matters when the whole point is
+// surviving a burst.
+class UpstashLimiter implements RateLimiter {
+  private ratelimit: Ratelimit;
+
+  constructor(redis: Redis) {
+    this.ratelimit = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(MAX_REQUESTS, '60 s'),
+      analytics: false,
+      ephemeralCache: new Map(),
+    });
+  }
+
+  async limit(key: string): Promise<LimitResult> {
+    const { success, limit, remaining, reset } = await this.ratelimit.limit(key);
+    return { success, limit, remaining, reset };
+  }
+}
+
+// Single swap point for Upstash: returns an Upstash-backed limiter (shared
+// across instances, unlike MemoryLimiter above) when credentials are
+// configured, otherwise falls back to the in-memory one. Memoized per warm
+// instance. withRateLimit's try/catch is what makes a Redis outage fail
+// OPEN rather than taking the site down — this function only decides which
+// limiter to try.
+let cachedLimiter: RateLimiter | null = null;
+
 function getLimiter(): RateLimiter {
-  return memoryLimiter;
+  if (cachedLimiter) return cachedLimiter;
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  cachedLimiter =
+    url && token ? new UpstashLimiter(new Redis({ url, token })) : memoryLimiter;
+  return cachedLimiter;
 }
 
 function getClientIp(req: NextRequest): string {
