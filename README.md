@@ -1,6 +1,37 @@
 # music-growth-pipeline
 
-A data engineering portfolio project analyzing listener patterns for independent artists using the Last.fm API. Built to demonstrate SQL depth, pipeline design, and data engineering fundamentals.
+**Do smaller independent artists grow their listener base faster than mainstream ones?**
+A data pipeline + dbt project + public web app built on Last.fm data to find out — and a portfolio piece demonstrating SQL depth and data engineering fundamentals.
+
+[![Live Site](https://img.shields.io/badge/live_site-music.deanslist.dev-8b5cf6)](https://music.deanslist.dev)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![Postgres](https://img.shields.io/badge/Postgres-Neon-336791?logo=postgresql&logoColor=white)
+![dbt](https://img.shields.io/badge/dbt-postgres-FF694B?logo=dbt&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/automation-weekly_cron-2088FF?logo=githubactions&logoColor=white)
+
+## The Finding
+
+Across 22,201 artists tracked over 13 weekly snapshots, **median listener growth falls monotonically with starting audience size**:
+
+| Quintile (smallest → largest) | Q1 | Q2 | Q3 | Q4 | Q5 |
+|---|---|---|---|---|---|
+| Median 13-week growth | **2.67%** | 2.46% | 2.10% | 1.76% | **1.71%** |
+
+No reversals at any step. Smaller artists also carry a much fatter upside tail — P90 growth in Q1 (16.88%) is over 4x Q5 (3.96%). Full breakdown, caveats, and a retracted earlier claim are in [Longitudinal Findings](#longitudinal-findings-2026-05-10-to-2026-08-02-13-weeks) below.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[Last.fm API] -->|Python| B[(Postgres / Neon)]
+    B -->|dbt staging + marts| C[(Serving-layer<br/>API models)]
+    C --> D[Next.js web app<br/>music.deanslist.dev]
+    C --> E[Power BI report]
+    F[GitHub Actions<br/>weekly cron] -.triggers.-> A
+```
+
+Ingestion snapshots each artist weekly since the API only returns cumulative all-time stats, not a time series. dbt builds the longitudinal dataset on top; the web app and Power BI report both read from a narrow, pre-joined serving layer — never straight from the marts.
 
 ## Research Question
 
@@ -23,6 +54,7 @@ Since the API only returns cumulative all-time stats (no built-in time series), 
 | Analytical queries | SQL |
 | Automation | GitHub Actions (weekly cron) |
 | Reporting | Power BI (live Postgres connection to Neon) |
+| Web app | Next.js 15 (App Router, TypeScript), deployed on Vercel |
 
 ## Schema
 
@@ -57,42 +89,10 @@ dbt/        dbt project — dbt_project.yml, models/, analyses/, tests/,
 sql/        Raw DDL — schema.sql (idempotent) and migrations/
 docs/       Findings log and the web app implementation plan
 data/       pipeline_stats.json, consumed by deanslist.dev at build time
-web/        Next.js app (not yet started)
+web/        Next.js app — live at music.deanslist.dev
 ```
 
 dbt commands take `--project-dir dbt`, or run them from inside `dbt/`.
-
-## Pipeline
-
-```
-chart.getTopArtists (pages 1–50 and 500–2000)
-        ↓
-    pipeline/seed_artists.py  →  artists + weekly_charts
-
-tag.getTopArtists (15 genres × 500 artists)
-        ↓
-    pipeline/seed_genre_artists.py  →  genres + genre_artists
-
-artist.getSimilar (top ~2,000 indie artists, limit 20 each)
-        ↓
-    pipeline/seed_similar_artists.py  →  artist_similarities
-
-artist.getInfo (all artists, weekly)
-        ↓
-    pipeline/snapshot_artists.py  →  artist_snapshots
-        ↓  (runs weekly via GitHub Actions)
-
-raw tables
-        ↓
-    dbt staging models  →  stg_artists, stg_artist_snapshots,
-                           stg_weekly_charts, stg_genres,
-                           stg_genre_artists, stg_artist_similarities
-        ↓
-    dbt mart models  →  artist_tiers, genre_stats,
-                        artist_similarity_network,
-                        listener_growth, artist_growth_summary,
-                        weekly_growth_by_tier, genre_growth
-```
 
 ## dbt Models
 
@@ -109,6 +109,8 @@ raw tables
 | `artist_growth_summary` | One row per artist: total growth, avg weekly %, weeks tracked |
 | `weekly_growth_by_tier` | Aggregate week-over-week listener growth per tier — the time-series view of the core finding |
 | `genre_growth` | Per-genre growth rates: avg and median total pct growth, avg weekly pct change |
+
+**Serving layer** — `dbt/models/api/`, narrow pre-joined tables read by the web app's API routes. See [`docs/webapp-implementation-plan.md`](docs/webapp-implementation-plan.md).
 
 ## Key Findings (Snapshot: 2026-04-27)
 
@@ -220,7 +222,7 @@ A GitHub Action runs every Sunday at 9am UTC and chains four steps:
 3. `pipeline/generate_stats.py` — queries marts, writes `data/pipeline_stats.json`
 4. `git push` — commits the updated JSON to this repo
 
-The portfolio site at [deanslist.dev](https://deanslist.dev) fetches `pipeline_stats.json` at build time and rebuilds nightly at 3:30am UTC, surfacing fresh stats automatically.
+[music.deanslist.dev](https://music.deanslist.dev) reads live from Postgres via the Next.js API routes, so it reflects new snapshots as soon as the weekly job lands (bounded by a 1-hour response cache). The portfolio site at [deanslist.dev](https://deanslist.dev) additionally fetches `pipeline_stats.json` at build time and rebuilds nightly at 3:30am UTC.
 
 A Power BI report connects directly to the Neon database via a live Postgres connection and surfaces the core findings across two pages: an overview with growth trends by tier and genre, and an artist drillthrough showing individual listener timelines.
 
@@ -228,5 +230,7 @@ Required GitHub secrets: `LASTFM_API_KEY`, `DATABASE_URL`, `PROFANITY_PATTERN`.
 
 ## What's Next
 
+- **Ingestion scale-up (Stage B)** — see [`docs/stage-b-plan.md`](docs/stage-b-plan.md)
 - **Deeper longitudinal data** — snapshots continue accumulating weekly; more weeks will strengthen the growth rate findings and surface longer-term trends
 - **Similarity network vs growth** — do indie artists with more cross-tier connections (similar to mainstream artists) grow faster? Currently limited by sparse similarity data for the highest-growth artists
+</content>
