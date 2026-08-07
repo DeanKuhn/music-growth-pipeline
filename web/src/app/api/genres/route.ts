@@ -16,8 +16,8 @@ async function handler(_req: NextRequest) {
         artist_count,
         avg_listeners,
         avg_plays_per_listener,
-        mainstream_count,
-        indie_count,
+        small_count,
+        large_count,
         avg_total_pct_growth,
         median_total_pct_growth,
         growth_avg_weekly_pct_change

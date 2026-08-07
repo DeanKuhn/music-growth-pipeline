@@ -23,13 +23,3 @@ export function formatPercentile(rank: number | null | undefined): string | null
   return `grew faster than ${pct}% of peers`;
 }
 
-const TIER_LABELS: Record<string, string> = {
-  mainstream: 'Mainstream',
-  indie: 'Indie',
-  unranked: 'Unranked',
-};
-
-export function formatTier(tier: string | null | undefined): string {
-  if (!tier) return '—';
-  return TIER_LABELS[tier] ?? tier;
-}

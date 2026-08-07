@@ -68,7 +68,6 @@ export interface ArtistProfile {
   display_name: string;
   slug: string;
   is_display_safe: boolean;
-  tier: string | null;
   min_page: number | null;
   global_rank: number | null;
   size_band: string | null;
@@ -117,7 +116,7 @@ export interface ComparePoint {
 
 export interface CompareResponse {
   artist_id: number;
-  vs: 'genre' | 'tier' | 'similar';
+  vs: 'genre' | 'size_band' | 'similar';
   insufficient_data: boolean;
   cohort_available: boolean;
   series: ComparePoint[];
@@ -127,7 +126,6 @@ export interface SimilarArtist {
   similar_artist_id: number;
   slug: string;
   display_name: string;
-  tier: string | null;
   size_band: string | null;
   latest_listeners: number | null;
   total_pct_growth: number | null;
@@ -145,7 +143,6 @@ export interface SearchResult {
   artist_id: number;
   slug: string;
   display_name: string;
-  tier: string | null;
   size_band: string | null;
   latest_listeners: number | null;
   listener_percentile: number | null;
@@ -170,7 +167,6 @@ export interface LeaderboardEntry {
   artist_id: number;
   slug: string;
   display_name: string;
-  tier: string | null;
   size_band: string | null;
   primary_genre: string | null;
   latest_listeners: number | null;
@@ -191,8 +187,8 @@ export interface Genre {
   artist_count: number;
   avg_listeners: number | null;
   avg_plays_per_listener: number | null;
-  mainstream_count: number;
-  indie_count: number;
+  small_count: number;
+  large_count: number;
   avg_total_pct_growth: number | null;
   median_total_pct_growth: number | null;
   growth_avg_weekly_pct_change: number | null;
@@ -204,9 +200,13 @@ export interface GenresResponse {
 
 export interface PipelineHealth {
   artists_total: number;
-  artists_mainstream: number;
-  artists_indie: number;
-  artists_unranked: number;
+  artists_lt10k: number;
+  artists_10k_50k: number;
+  artists_50k_100k: number;
+  artists_100k_250k: number;
+  artists_250k_500k: number;
+  artists_500k_1m: number;
+  artists_1m_plus: number;
   artists_with_profile: number;
   artists_searchable: number;
   artists_redacted: number;
@@ -232,7 +232,7 @@ export function getArtistTimeseries(slug: string) {
   return getJson<TimeseriesResponse>(`/api/artists/${slug}/timeseries`);
 }
 
-export function getArtistCompare(slug: string, vs: 'genre' | 'tier' | 'similar') {
+export function getArtistCompare(slug: string, vs: 'genre' | 'size_band' | 'similar') {
   return getJson<CompareResponse>(`/api/artists/${slug}/compare?vs=${vs}`);
 }
 

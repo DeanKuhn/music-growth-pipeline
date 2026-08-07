@@ -63,12 +63,8 @@ models:
         description: False when the name matches PROFANITY_PATTERN.
         tests:
           - not_null
-      - name: tier
-        tests:
-          - accepted_values:
-              values: ['mainstream', 'indie', 'unranked']
       - name: size_band
-        description: Listener band. Use this as the cohort key, never tier.
+        description: Listener band. The sole size classification — see artist_chart_position for raw chart-depth stats (min_page, global_rank), which are not used for classification.
         tests:
           - not_null
           - accepted_values:

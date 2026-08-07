@@ -1,6 +1,6 @@
 # music-growth-pipeline
 
-**Do smaller independent artists grow their listener base faster than mainstream ones?**
+**Do smaller artists grow their listener base faster than larger ones?**
 A data pipeline + dbt project + public web app built on Last.fm data to find out — and a portfolio piece demonstrating SQL depth and data engineering fundamentals.
 
 [![Live Site](https://img.shields.io/badge/live_site-music.deanslist.dev-8b5cf6)](https://music.deanslist.dev)
@@ -35,11 +35,13 @@ Ingestion snapshots each artist weekly since the API only returns cumulative all
 
 ## Research Question
 
-Do smaller independent artists (ranked pages 500–2000 on the Last.fm global chart) have meaningfully different listener engagement patterns than mainstream artists (pages 1–50)? And over time, does chart position correlate with listener growth? Do genre and artist similarity network position play a role?
+Do smaller artists (by listener count) have meaningfully different listener engagement patterns than larger ones? And over time, does starting size correlate with listener growth? Do genre and artist similarity network position play a role?
+
+(Chart position was the original size proxy — see [Why This Design](#why-this-design) — but Last.fm's chart reflects recent scrobble activity, not listener count, so a large artist can rank low and a small one can rank high. Listener count, via `size_band`, is the size measure used throughout.)
 
 ## Why This Design
 
-Last.fm's `chart.getTopArtists` endpoint returns a current global ranking paginated across 2,000 pages. Pages 1–50 contain household names; pages 500–2000 contain smaller independent artists with real but modest audiences — an interesting population for engagement analysis.
+Last.fm's `chart.getTopArtists` endpoint returns a current global ranking paginated across 2,000 pages, used here to seed a population spanning household names (pages 1–50) down to smaller artists with modest audiences (pages 500–2000). Chart position reflects recent scrobble activity, though, not listener count — it's a seeding mechanism, not the size measure used in analysis (see `size_band` below).
 
 Since the API only returns cumulative all-time stats (no built-in time series), the pipeline snapshots each artist weekly and builds its own longitudinal dataset. Cross-sectional analysis is available immediately; longitudinal analysis accumulates over time.
 
@@ -102,46 +104,56 @@ dbt commands take `--project-dir dbt`, or run them from inside `dbt/`.
 
 | Model | Description |
 |---|---|
-| `artist_tiers` | Classifies each artist as `mainstream` (min chart page ≤ 50) or `indie` |
-| `genre_stats` | Per-genre summary: artist count, avg listeners, plays-per-listener ratio, mainstream vs indie breakdown |
-| `artist_similarity_network` | Enriched similarity pairs with both artists' tier and a `cross_tier` / `same_tier` flag |
+| `artist_chart_position` | Raw chart page/rank per artist — a seeding-coverage stat, not a size classification |
+| `genre_stats` | Per-genre summary: artist count, avg listeners, plays-per-listener ratio, small (<250k) vs large (≥250k) breakdown |
+| `artist_similarity_network` | Enriched similarity pairs with both artists' `size_band` and a `cross_band` / `same_band` flag |
 | `listener_growth` | Week-over-week listener delta per artist using `LAG` window function |
 | `artist_growth_summary` | One row per artist: total growth, avg weekly %, weeks tracked |
-| `weekly_growth_by_tier` | Aggregate week-over-week listener growth per tier — the time-series view of the core finding |
+| `weekly_growth_by_size_band` | Aggregate week-over-week listener growth per size_band — the time-series view of the core finding |
 | `genre_growth` | Per-genre growth rates: avg and median total pct growth, avg weekly pct change |
 
 **Serving layer** — `dbt/models/api/`, narrow pre-joined tables read by the web app's API routes. See [`docs/webapp-implementation-plan.md`](docs/webapp-implementation-plan.md).
 
-## Key Findings (Snapshot: 2026-04-27)
+## Key Findings (Snapshot: 2026-08-07)
 
-Cross-sectional analysis comparing 250 mainstream artists (pages 1–50) vs 7,505 indie artists (pages 500–2000):
+> **Note on an earlier version of this section.** This section previously compared a `mainstream`/`indie` split derived from Last.fm chart page (min page ≤ 50 = mainstream). Chart position reflects recent scrobble activity, not listener count — a well-known artist can rank low (or not chart at all) while a small, currently-buzzing artist ranks high — so that split was retired project-wide in favor of `size_band`, a listener-count-based classification (7 bands, from `<10k` to `1M+`). The tables below are the same cross-sectional analysis, recomputed on `size_band`.
+
+Cross-sectional analysis across all 22,207 tracked artists, grouped by `size_band` (each artist's latest snapshot):
 
 **Listener counts**
-| Tier | Median listeners | P90 listeners |
-|---|---|---|
-| Mainstream | 3,323,634 | 5,887,602 |
-| Indie | 240,361 | 782,674 |
-
-The distributions do not overlap — the top 10% of indie artists (782K) fall well below the bottom 25% of mainstream artists (2.3M).
+| Size band | Artists | Median listeners | P90 listeners |
+|---|---|---|---|
+| <10k | 444 | 5,592 | 9,518 |
+| 10k–50k | 2,592 | 35,427 | 49,840 |
+| 50k–100k | 3,541 | 78,172 | 99,012 |
+| 100k–250k | 7,218 | 166,689 | 235,371 |
+| 250k–500k | 4,275 | 350,283 | 469,815 |
+| 500k–1M | 2,382 | 685,281 | 927,598 |
+| 1M+ | 1,749 | 1,647,449 | 3,558,903 |
 
 **Plays-per-listener ratio** (total plays ÷ total listeners)
-| Tier | P25 | Median | P75 |
+| Size band | P25 | Median | P75 |
 |---|---|---|---|
-| Mainstream | 48.64 | 74.76 | 112.77 |
-| Indie | 11.31 | 17.69 | 29.08 |
+| <10k | 6.89 | 10.23 | 18.89 |
+| 10k–50k | 8.08 | 12.60 | 21.72 |
+| 50k–100k | 8.81 | 13.61 | 23.16 |
+| 100k–250k | 9.54 | 14.15 | 23.18 |
+| 250k–500k | 10.22 | 15.36 | 25.18 |
+| 500k–1M | 11.84 | 18.14 | 29.69 |
+| 1M+ | 17.07 | 27.02 | 45.36 |
 
-The mainstream median ratio (74.76) is ~4x higher than indie (17.69), consistent across the full distribution. Mainstream P25 (48.64) exceeds indie P75 (29.08).
+The old mainstream-vs-indie framing implied a clean, monotone 4x engagement gap between two groups. The full 7-band breakdown tells a different story: plays-per-listener is **U-shaped**, not monotone — it dips through the middle bands (100k–500k, median ~14–15) and rises at both ends (median 10.23 at `<10k`, 27.02 at `1M+`). The smallest and largest artists both have more engaged listeners per capita than the middle of the distribution; only the top end (1M+) resembles the old "mainstream" story.
 
-*Caveat: mainstream artists have older catalogues on average, so accumulated playcounts likely contribute to the ratio gap alongside genuine engagement differences.*
+*Caveat: larger/older artists likely have longer catalogue histories on average, so accumulated playcounts contribute to the upper end of the ratio alongside genuine engagement differences.*
 
 **Genre breakdown (top 5 by avg listeners)**
-| Genre | Avg listeners | Avg plays/listener | Mainstream | Indie |
+| Genre | Avg listeners | Avg plays/listener | Small (<250k) | Large (≥250k) |
 |---|---|---|---|---|
-| alternative | 1,878,778 | 41.83 | 64 | 167 |
-| rock | 1,819,865 | 36.95 | 59 | 178 |
-| pop | 1,635,383 | 55.79 | 81 | 152 |
-| indie | 1,540,312 | 40.12 | 59 | 180 |
-| hip-hop | 1,347,606 | 42.54 | 56 | 174 |
+| rock | 1,942,274 | 34.59 | 41 | 475 |
+| alternative | 1,795,541 | 36.30 | 46 | 467 |
+| pop | 1,640,376 | 45.80 | 24 | 494 |
+| indie | 1,610,111 | 37.45 | 22 | 490 |
+| hip-hop | 1,405,117 | 43.82 | 41 | 477 |
 
 Pop shows the highest plays-per-listener ratio despite ranking third in avg listeners — pop fans replay more.
 
@@ -224,7 +236,7 @@ A GitHub Action runs every Sunday at 9am UTC and chains four steps:
 
 [music.deanslist.dev](https://music.deanslist.dev) reads live from Postgres via the Next.js API routes, so it reflects new snapshots as soon as the weekly job lands (bounded by a 1-hour response cache). The portfolio site at [deanslist.dev](https://deanslist.dev) additionally fetches `pipeline_stats.json` at build time and rebuilds nightly at 3:30am UTC.
 
-A Power BI report connects directly to the Neon database via a live Postgres connection and surfaces the core findings across two pages: an overview with growth trends by tier and genre, and an artist drillthrough showing individual listener timelines.
+A Power BI report connects directly to the Neon database via a live Postgres connection and surfaces the core findings across two pages: an overview with growth trends by size band and genre, and an artist drillthrough showing individual listener timelines.
 
 Required GitHub secrets: `LASTFM_API_KEY`, `DATABASE_URL`, `PROFANITY_PATTERN`.
 
@@ -232,5 +244,5 @@ Required GitHub secrets: `LASTFM_API_KEY`, `DATABASE_URL`, `PROFANITY_PATTERN`.
 
 - **Ingestion scale-up (Stage B)** — see [`docs/stage-b-plan.md`](docs/stage-b-plan.md)
 - **Deeper longitudinal data** — snapshots continue accumulating weekly; more weeks will strengthen the growth rate findings and surface longer-term trends
-- **Similarity network vs growth** — do indie artists with more cross-tier connections (similar to mainstream artists) grow faster? Currently limited by sparse similarity data for the highest-growth artists
+- **Similarity network vs growth** — do smaller artists with more cross-band connections (similar to larger artists) grow faster? Currently limited by sparse similarity data for the highest-growth artists
 </content>

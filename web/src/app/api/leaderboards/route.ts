@@ -26,7 +26,6 @@ async function handler(req: NextRequest) {
         artist_id,
         slug,
         display_name,
-        tier,
         size_band,
         primary_genre,
         latest_listeners,

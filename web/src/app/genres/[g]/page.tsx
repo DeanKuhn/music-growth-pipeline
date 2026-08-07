@@ -48,8 +48,8 @@ export default async function GenrePage({ params }: { params: Promise<{ g: strin
       <StatTileGrid>
         <StatTile label="Artists" value={String(genre.artist_count)} />
         <StatTile label="Avg listeners" value={formatListeners(genre.avg_listeners)} />
-        <StatTile label="Mainstream" value={String(genre.mainstream_count)} />
-        <StatTile label="Indie" value={String(genre.indie_count)} />
+        <StatTile label="Small (<250k)" value={String(genre.small_count)} />
+        <StatTile label="Large (≥250k)" value={String(genre.large_count)} />
       </StatTileGrid>
 
       <div className="card" style={{ padding: 20, marginTop: 20 }}>

@@ -17,7 +17,7 @@ export default async function HomePage() {
         </h1>
         <p className="secondary" style={{ fontSize: 16, margin: '0 0 28px' }}>
           Longitudinal Last.fm listener data for {stats ? formatListeners(stats.artists_total) : 'thousands of'}{' '}
-          independent artists. Search one, and see it compared to its genre, its size tier, and artists like it.
+          independent artists. Search one, and see it compared to its genre, its size band, and artists like it.
         </p>
         <SearchBar autoFocus />
       </div>

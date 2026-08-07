@@ -1,16 +1,15 @@
 -- longitudinal_analysis.sql
--- Longitudinal analysis: listener growth over 7 weeks (2026-05-10 to 2026-06-14)
--- Queries run against dbt mart models built on top of weekly artist_snapshots.
--- 24,770 artists tracked. Mainstream = pages 1-50 (250 artists), Indie = pages 51+ (24,520 artists).
+-- Longitudinal analysis: listener growth over the tracked window.
+-- Queries run against dbt mart models built on top of weekly artist_snapshots,
+-- grouped by size_band (listener-count based) rather than the retired
+-- mainstream/indie chart-page split — see CLAUDE.md and docs/findings.md.
 
 
--- QUERY 1: Overall growth rate by tier
--- Finding: underground artists (pages 1000+) grow at nearly 3x the median rate
--- of mainstream artists. Growth rate increases as chart page depth increases,
--- suggesting smaller artists are accumulating listeners faster in percentage terms.
+-- QUERY 1: Overall growth rate by size_band
 
 select
-    tier,
+    size_band,
+    size_band_sort,
     count(*) as artist_count,
     round(avg(total_pct_growth), 2) as avg_pct_growth,
     round(
@@ -22,31 +21,26 @@ select
 
 from {{ ref('artist_growth_summary') }}
 where weeks_tracked >= 6
-group by tier
-order by tier;
+group by size_band, size_band_sort
+order by size_band_sort;
 
 
--- QUERY 2: Week-over-week aggregate listener growth by tier
--- Finding: both tiers grow at roughly 0.2% per week in aggregate. Mainstream
--- artists add more listeners in absolute terms due to their larger base,
--- while indie artists grow faster on a per-artist percentage basis.
+-- QUERY 2: Week-over-week aggregate listener growth by size_band
 
 select
     snapshot_date,
-    tier,
+    size_band,
     total_listeners,
     artist_count,
     listener_delta,
     listener_pct_change
 
-from {{ ref('weekly_growth_by_tier') }}
-order by tier, snapshot_date;
+from {{ ref('weekly_growth_by_size_band') }}
+order by size_band, snapshot_date;
 
 
--- QUERY 3: Fastest-growing indie artists (7-week period)
--- Finding: the fastest-growing artists are concentrated in the deepest chart
--- pages (1000+), with several growing 100-400% over 7 weeks. Growth patterns
--- vary — some spike then decelerate (viral moment), others show steady acceleration.
+-- QUERY 3: Fastest-growing smaller artists (size_band_sort <= 4, i.e. under
+-- 250k starting listeners — the same small/large boundary used elsewhere)
 
 select
     artist_name,
@@ -59,7 +53,7 @@ select
     weeks_tracked
 
 from {{ ref('artist_growth_summary') }}
-where tier = 'indie'
+where size_band_sort <= 4
     and weeks_tracked >= 6
     and starting_count > 5000
 order by total_pct_growth desc

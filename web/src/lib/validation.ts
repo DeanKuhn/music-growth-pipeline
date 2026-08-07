@@ -17,24 +17,20 @@ export const SIZE_BANDS = [
   '1M+',
 ] as const;
 
-export const TIERS = ['mainstream', 'indie', 'unranked'] as const;
-
 export const LEADERBOARD_SLICE_TYPES = [
   'fastest_growing_pct',
   'biggest_listener_gain',
   'most_listeners',
 ] as const;
 
-// api_leaderboard.slice_key is 'all' or a size_band — never 'tier'.
+// api_leaderboard.slice_key is 'all' or a size_band.
 export const LEADERBOARD_SLICE_KEYS = ['all', ...SIZE_BANDS] as const;
 
-// GET /artists/[slug]/compare?vs= — the plan's genre|tier|similar. 'genre'
-// and 'tier' map to api_cohort_weekly.cohort_type ('genre' | 'size_band');
-// there is no 'tier' cohort_type, so the route maps vs=tier -> cohort_type
-// 'size_band' using the artist's own size_band as cohort_key. 'similar'
-// doesn't touch api_cohort_weekly at all — it's a different query against
-// api_artist_similar, branched on in the route handler.
-export const COMPARE_TARGETS = ['genre', 'tier', 'similar'] as const;
+// GET /artists/[slug]/compare?vs= — 'genre' and 'size_band' map 1:1 to
+// api_cohort_weekly.cohort_type. 'similar' doesn't touch api_cohort_weekly at
+// all — it's a different query against api_artist_similar, branched on in the
+// route handler.
+export const COMPARE_TARGETS = ['genre', 'size_band', 'similar'] as const;
 
 // --- Shared primitives --------------------------------------------------
 
@@ -62,7 +58,6 @@ export const searchQuerySchema = z
   .refine((s) => !/[%_]/.test(s), 'query must not contain wildcard characters');
 
 export const sizeBandSchema = z.enum(SIZE_BANDS);
-export const tierSchema = z.enum(TIERS);
 export const leaderboardSliceTypeSchema = z.enum(LEADERBOARD_SLICE_TYPES);
 export const leaderboardSliceKeySchema = z.enum(LEADERBOARD_SLICE_KEYS);
 export const compareTargetSchema = z.enum(COMPARE_TARGETS);

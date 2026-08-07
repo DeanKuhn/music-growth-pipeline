@@ -4,19 +4,26 @@ with growth as (
 
 ),
 
-tiers as (
+base as (
 
-    select * from {{ ref('artist_tiers') }}
+    select * from {{ ref('int_artist_base') }}
+
+),
+
+chart_position as (
+
+    select * from {{ ref('artist_chart_position') }}
 
 ),
 
 summary as (
 
     select
-        t.artist_id,
-        t.artist_name,
-        t.tier,
-        t.min_page,
+        b.artist_id,
+        b.artist_name,
+        b.size_band,
+        b.size_band_sort,
+        cp.min_page,
 
         -- Take the first and last observation by date, not min()/max().
         -- Last.fm occasionally revises listener counts downward, and max()
@@ -32,8 +39,9 @@ summary as (
         count(g.snapshot_date) as weeks_tracked
 
     from growth g
-    join tiers t on g.artist_id = t.artist_id
-    group by t.artist_id, t.artist_name, t.tier, t.min_page
+    join base b on g.artist_id = b.artist_id
+    left join chart_position cp on g.artist_id = cp.artist_id
+    group by b.artist_id, b.artist_name, b.size_band, b.size_band_sort, cp.min_page
 
 ),
 
@@ -42,7 +50,8 @@ final as (
     select
         artist_id,
         artist_name,
-        tier,
+        size_band,
+        size_band_sort,
         min_page,
         starting_count,
         ending_count,
@@ -61,4 +70,3 @@ final as (
 )
 
 select * from final
-

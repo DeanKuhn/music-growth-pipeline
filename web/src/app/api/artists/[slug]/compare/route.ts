@@ -73,11 +73,7 @@ async function handler(req: NextRequest, { params }: RouteContext) {
         order by ts.snapshot_date asc
       `;
     } else {
-      // vs=genre -> cohort_type='genre'; vs=tier -> cohort_type='size_band'.
-      // api_cohort_weekly has no 'tier' cohort_type (revision 2 — "unranked"
-      // spans the full listener range, so it isn't a peer of indie/mainstream),
-      // so the tier tab compares against the artist's own size_band instead.
-      const cohortType = vs === 'genre' ? 'genre' : 'size_band';
+      // vs maps 1:1 to api_cohort_weekly.cohort_type ('genre' | 'size_band').
       const cohortKey = vs === 'genre' ? profile.primary_genre : profile.size_band;
 
       rows = await sql`
@@ -92,7 +88,7 @@ async function handler(req: NextRequest, { params }: RouteContext) {
           cw.p75_indexed
         from api_artist_timeseries ts
         left join api_cohort_weekly cw
-          on cw.cohort_type = ${cohortType}
+          on cw.cohort_type = ${vs}
          and cw.cohort_key = ${cohortKey}
          and cw.snapshot_date = ts.snapshot_date
         where ts.artist_id = ${artistId}

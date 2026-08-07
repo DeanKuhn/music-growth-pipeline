@@ -2,13 +2,13 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getLeaderboard } from '@/lib/api';
 import { SIZE_BANDS, LEADERBOARD_SLICE_TYPES } from '@/lib/validation';
-import { formatListeners, formatPct, formatTier } from '@/lib/format';
+import { formatListeners, formatPct } from '@/lib/format';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Leaderboards',
-  description: 'Fastest-growing artists, biggest listener gains, and most-listened artists by size tier.',
+  description: 'Fastest-growing artists, biggest listener gains, and most-listened artists by size band.',
 };
 
 const SLICE_LABELS: Record<string, string> = {
@@ -104,7 +104,7 @@ export default async function LeaderboardsPage({
               <tr className="muted" style={{ fontSize: 12, textAlign: 'left' }}>
                 <th style={{ padding: '10px 12px' }}>#</th>
                 <th style={{ padding: '10px 12px' }}>Artist</th>
-                <th style={{ padding: '10px 12px' }}>Tier</th>
+                <th style={{ padding: '10px 12px' }}>Size band</th>
                 <th style={{ padding: '10px 12px' }}>Genre</th>
                 <th style={{ padding: '10px 12px' }}>Listeners</th>
                 <th style={{ padding: '10px 12px' }}>Growth</th>
@@ -122,7 +122,7 @@ export default async function LeaderboardsPage({
                     </Link>
                   </td>
                   <td className="secondary" style={{ padding: '10px 12px' }}>
-                    {formatTier(r.tier)}
+                    {r.size_band ?? '—'}
                   </td>
                   <td className="secondary" style={{ padding: '10px 12px' }}>
                     {r.primary_genre ?? '—'}

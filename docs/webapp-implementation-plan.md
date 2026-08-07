@@ -2,6 +2,8 @@
 
 > ## PROGRESS — last updated 2026-08-07
 >
+> **`tier` removed project-wide (2026-08-07), after this plan was written.** Everywhere below that references `tier` (`mainstream`/`indie`/`unranked`, derived from chart page depth) — including the A2 schema section, the A4 API spec table, and the A5b verification queries — describes the schema as it was designed and initially built, not the current state. `tier` is gone; `size_band` (listener-count based) is now the sole size classification across dbt, the API, and the web UI. See `docs/findings.md` Issue #7 and `CLAUDE.md` for the current state and the reasoning (chart position reflects recent scrobble activity, not listener count, so it misled viewers about artist size).
+>
 > **Stage E is COMPLETE.** Deployed to Vercel (Root Directory `web`), `music.deanslist.dev` live over HTTPS via a Porkbun CNAME to Vercel's per-project target, weekly workflow wired to POST `/api/revalidate` after `generate_stats.py`. Real-time rate limiting upgraded from the in-memory fallback to `@upstash/ratelimit` + `@upstash/redis` (`web/src/lib/rate-limit.ts`'s `getLimiter()` now returns a Redis-backed limiter when `UPSTASH_REDIS_REST_URL`/`TOKEN` are set, shared across instances instead of per-instance; falls back to memory if unset).
 >
 > **Four real bugs found getting the deploy live, none caught by the Stage D `next build` + `next start` verification because that verification never ran as an actual separate deployment talking to itself over the network:**

@@ -22,10 +22,14 @@ artists as (
 
     select
         count(*) as artists_total,
-        count(*) filter (where tier = 'mainstream') as artists_mainstream,
-        count(*) filter (where tier = 'indie') as artists_indie,
-        count(*) filter (where tier = 'unranked') as artists_unranked
-    from {{ ref('artist_tiers') }}
+        count(*) filter (where size_band = '<10k') as artists_lt10k,
+        count(*) filter (where size_band = '10k-50k') as artists_10k_50k,
+        count(*) filter (where size_band = '50k-100k') as artists_50k_100k,
+        count(*) filter (where size_band = '100k-250k') as artists_100k_250k,
+        count(*) filter (where size_band = '250k-500k') as artists_250k_500k,
+        count(*) filter (where size_band = '500k-1M') as artists_500k_1m,
+        count(*) filter (where size_band = '1M+') as artists_1m_plus
+    from {{ ref('int_artist_base') }}
 
 ),
 
@@ -50,9 +54,13 @@ final as (
 
     select
         a.artists_total,
-        a.artists_mainstream,
-        a.artists_indie,
-        a.artists_unranked,
+        a.artists_lt10k,
+        a.artists_10k_50k,
+        a.artists_50k_100k,
+        a.artists_100k_250k,
+        a.artists_250k_500k,
+        a.artists_500k_1m,
+        a.artists_1m_plus,
 
         c.artists_with_profile,
         c.artists_searchable,
