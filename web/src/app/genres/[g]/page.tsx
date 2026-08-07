@@ -8,8 +8,12 @@ import { formatListeners, formatPct } from '@/lib/format';
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const { genres } = await getGenres();
-  return genres.map((g) => ({ g: g.genre }));
+  try {
+    const { genres } = await getGenres();
+    return genres.map((g) => ({ g: g.genre }));
+  } catch {
+    return [];
+  }
 }
 
 async function findGenre(g: string) {
