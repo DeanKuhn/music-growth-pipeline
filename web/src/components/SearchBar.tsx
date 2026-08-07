@@ -50,7 +50,7 @@ export function SearchBar({ autoFocus = false }: { autoFocus?: boolean }) {
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
-  const items: { artist_id: number; slug: string; display_name: string; latest_listeners: number | null; size_band?: string | null }[] =
+  const items: { artist_id: number; slug: string; display_name: string; latest_listeners: number | null }[] =
     data && data.found ? data.results : data && !data.found ? data.suggestions : [];
 
   function go(slug: string) {
@@ -151,7 +151,6 @@ export function SearchBar({ autoFocus = false }: { autoFocus?: boolean }) {
                     >
                       <span>{item.display_name}</span>
                       <span className="muted tabular" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
-                        {item.size_band ? item.size_band + ' · ' : ''}
                         {formatListeners(item.latest_listeners)} listeners
                       </span>
                     </button>

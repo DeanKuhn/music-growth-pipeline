@@ -51,7 +51,6 @@ export function SimilarTable({ similar }: { similar: SimilarArtist[] }) {
         <thead>
           <tr className="muted" style={{ fontSize: 12, textAlign: 'left' }}>
             <th style={{ padding: '6px 8px' }}>Artist</th>
-            <th style={{ padding: '6px 8px' }}>Size band</th>
             <th style={{ padding: '6px 8px' }}>Listeners</th>
             <th style={{ padding: '6px 8px' }}>13-week growth</th>
           </tr>
@@ -63,9 +62,6 @@ export function SimilarTable({ similar }: { similar: SimilarArtist[] }) {
                 <Link href={`/artist/${s.slug}`} style={{ textDecoration: 'none', fontWeight: 500 }}>
                   {s.display_name}
                 </Link>
-              </td>
-              <td style={{ padding: '8px' }} className="secondary">
-                {s.size_band ?? '—'}
               </td>
               <td style={{ padding: '8px' }} className="tabular">
                 {formatListeners(s.latest_listeners)}

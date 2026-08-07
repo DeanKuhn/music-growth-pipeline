@@ -104,7 +104,6 @@ export default async function LeaderboardsPage({
               <tr className="muted" style={{ fontSize: 12, textAlign: 'left' }}>
                 <th style={{ padding: '10px 12px' }}>#</th>
                 <th style={{ padding: '10px 12px' }}>Artist</th>
-                <th style={{ padding: '10px 12px' }}>Size band</th>
                 <th style={{ padding: '10px 12px' }}>Genre</th>
                 <th style={{ padding: '10px 12px' }}>Listeners</th>
                 <th style={{ padding: '10px 12px' }}>Growth</th>
@@ -120,9 +119,6 @@ export default async function LeaderboardsPage({
                     <Link href={`/artist/${r.slug}`} style={{ textDecoration: 'none', fontWeight: 500 }}>
                       {r.display_name}
                     </Link>
-                  </td>
-                  <td className="secondary" style={{ padding: '10px 12px' }}>
-                    {r.size_band ?? '—'}
                   </td>
                   <td className="secondary" style={{ padding: '10px 12px' }}>
                     {r.primary_genre ?? '—'}
