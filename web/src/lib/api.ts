@@ -246,7 +246,7 @@ export function search(q: string, limit = 10) {
 
 export function getLeaderboard(sliceType: string, sliceKey: string, limit = 20) {
   return getJson<LeaderboardResponse>(
-    `/api/leaderboards?slice_type=${sliceType}&slice_key=${sliceKey}&limit=${limit}`
+    `/api/leaderboards?slice_type=${encodeURIComponent(sliceType)}&slice_key=${encodeURIComponent(sliceKey)}&limit=${limit}`
   );
 }
 

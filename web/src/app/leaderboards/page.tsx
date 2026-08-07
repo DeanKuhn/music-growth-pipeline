@@ -59,7 +59,7 @@ export default async function LeaderboardsPage({
         {LEADERBOARD_SLICE_TYPES.map((st) => (
           <Link
             key={st}
-            href={`/leaderboards?slice_type=${st}&slice_key=${sliceKey}`}
+            href={`/leaderboards?slice_type=${encodeURIComponent(st)}&slice_key=${encodeURIComponent(sliceKey)}`}
             style={{
               padding: '6px 14px',
               borderRadius: 999,
@@ -79,7 +79,7 @@ export default async function LeaderboardsPage({
         {['all', ...SIZE_BANDS].map((sk) => (
           <Link
             key={sk}
-            href={`/leaderboards?slice_type=${sliceType}&slice_key=${sk}`}
+            href={`/leaderboards?slice_type=${encodeURIComponent(sliceType)}&slice_key=${encodeURIComponent(sk)}`}
             style={{
               padding: '4px 10px',
               borderRadius: 999,
