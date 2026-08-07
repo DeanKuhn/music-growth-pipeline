@@ -54,8 +54,10 @@ async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(`${getBaseUrl()}${path}`, {
     // Server-side fetch already inherits the route's own Cache-Control on
     // the client; this just tells Next's fetch cache to behave the same way
-    // for prerendering/ISR of these pages.
-    next: { revalidate: 3600 },
+    // for prerendering/ISR of these pages. Tagged 'marts' so the weekly
+    // workflow's POST /api/revalidate (after generate_stats.py + dbt run)
+    // actually invalidates it instead of waiting out the 3600s window.
+    next: { revalidate: 3600, tags: ['marts'] },
   });
   if (res.status === 404) throw new ApiError(404, 'not found');
   if (!res.ok) throw new ApiError(res.status, `upstream ${res.status}`);
