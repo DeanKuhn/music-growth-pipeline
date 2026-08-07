@@ -63,7 +63,12 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
   try {
     profile = await getArtistProfile(slug);
   } catch (err) {
-    if (err instanceof ApiError && err.status === 404) notFound();
+    // 404: slug is well-formed but the artist doesn't exist. 400: slug is
+    // malformed (no leading digits) — extractArtistIdFromSlug rejected it
+    // before it ever became a lookup. Both mean "there's nothing to show
+    // here" from this page's perspective, so both render not-found rather
+    // than letting a 400 fall through to an uncaught exception / 500.
+    if (err instanceof ApiError && (err.status === 404 || err.status === 400)) notFound();
     throw err;
   }
 
