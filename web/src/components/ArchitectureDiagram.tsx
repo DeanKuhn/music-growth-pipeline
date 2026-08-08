@@ -14,7 +14,7 @@ export function ArchitectureDiagram() {
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
-        gap: 0,
+        rowGap: 12,
       }}
     >
       {STAGES.map((s, i) => (
