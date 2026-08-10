@@ -2,11 +2,55 @@ name: Weekly Artist Snapshot
 
 on:
   schedule:
-    - cron: "0 9 * * 0"  # every Sunday at 9am UTC
+    - cron: "0 9 * * 0"   # primary: every Sunday at 9am UTC
+    - cron: "0 14 * * 0"  # catch-up: 5h later, safe no-op if primary finished cleanly
   workflow_dispatch:       # allows manual trigger from GitHub UI
+
+concurrency:
+  group: weekly-snapshot
+  cancel-in-progress: false
 
 jobs:
   snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    outputs:
+      snapshot_date: ${{ steps.compute_date.outputs.date }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compute snapshot date
+        id: compute_date
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, 'pipeline')
+          from snapshot_artists import week_anchor
+          print(f'date={week_anchor().isoformat()}')
+          " >> "$GITHUB_OUTPUT"
+
+      - name: Run snapshot
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python pipeline/snapshot_artists.py --date ${{ steps.compute_date.outputs.date }}
+
+  rebuild:
+    needs: snapshot
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -22,12 +66,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
-
-      - name: Run snapshot
-        env:
-          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python pipeline/snapshot_artists.py
 
       - name: Install dbt
         run: pip install dbt-postgres
@@ -79,10 +117,12 @@ jobs:
             || echo "::warning::revalidate call failed — app will still pick up new data within the hour via s-maxage"
 
       - name: Commit and push stats
+        env:
+          SNAPSHOT_DATE: ${{ needs.snapshot.outputs.snapshot_date }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/pipeline_stats.json
-          git diff --staged --quiet || git commit -m "chore: update pipeline stats"
+          git diff --staged --quiet || git commit -m "chore: update pipeline stats (snapshot ${SNAPSHOT_DATE})"
           git pull --rebase
           git push

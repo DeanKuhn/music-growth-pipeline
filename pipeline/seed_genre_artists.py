@@ -1,9 +1,9 @@
+import argparse
 import logging
 import datetime
-import time
 
 from db import get_conn, get_or_create_artist
-from lastfm import get
+from lastfm import TokenBucket, get_with_retry
 
 
 logging.basicConfig(level=logging.INFO,
@@ -11,16 +11,35 @@ logging.basicConfig(level=logging.INFO,
 log = logging.getLogger(__name__)
 
 
-GENRE_LIST = ["rock", "pop", "metal", "country", "hip-hop", "electronic",
-              "folk", "indie", "jazz", "classical", "r&b", "punk", "ambient",
-              "edm", "alternative"]
+# chart.getTopTags mixes real genres with folksonomy/non-genre tags
+# (usage tags, decades, vocalist labels, personal-list tags).
+NON_GENRE_TAGS = {
+    "seen live", "female vocalists", "female vocalist", "male vocalists",
+    "bookmark", "favorites", "albums i own", "love", "beautiful", "cover",
+    "mellow", "guitar", "piano", "80s", "90s", "00s", "70s", "60s",
+}
 
 
-def seed(conn, cur):
+def fetch_top_tags(bucket, limit=100):
+    data = get_with_retry(
+        {"method": "chart.getTopTags", "limit": min(limit, 100)},
+        bucket=bucket, timeout=30)
+    tags = data.get("tags", {}).get("tag", [])
+    names = dict.fromkeys(t["name"].strip().lower() for t in tags)
+    return [t for t in names if t not in NON_GENRE_TAGS][:limit]
+
+
+def seed(conn, cur, tag_limit=500, genre_limit=100, dry_run=False):
     snapshot_date = datetime.date.today()
-    i = 0
+    bucket = TokenBucket(rate=4.0, capacity=5.0)
 
-    for genre in GENRE_LIST:
+    genre_list = fetch_top_tags(bucket, limit=genre_limit)
+    log.info(f"Fetched {len(genre_list)} tags: {genre_list}")
+    if dry_run:
+        return
+
+    i = 0
+    for genre in genre_list:
         try:
             cur.execute("""
                 INSERT INTO genres(genre, fetched_at)
@@ -38,10 +57,9 @@ def seed(conn, cur):
 
             log.info(f"{genre} inserted into genres | id = {genre_id}")
 
-            data = get(
-                {"method": "tag.getTopArtists", "tag": genre, "limit": 500}
-            )
-            time.sleep(0.5)
+            data = get_with_retry(
+                {"method": "tag.getTopArtists", "tag": genre, "limit": tag_limit},
+                bucket=bucket, timeout=30)
             artists = data.get("topartists", {}).get("artist", [])
 
             for artist in artists:
@@ -80,8 +98,23 @@ def seed(conn, cur):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--limit", type=int, default=100,
+        help="Number of top tags to use as genres.",
+    )
+    parser.add_argument(
+        "--tag-limit", type=int, default=500,
+        help="Per-genre artist cap passed to tag.getTopArtists.",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true",
+        help="Fetch and log the tag list only; no API calls beyond that, no writes.",
+    )
+    args = parser.parse_args()
+
     conn = get_conn()
     cur = conn.cursor()
-    seed(conn, cur)
-    conn.commit()
+    seed(conn, cur, tag_limit=args.tag_limit, genre_limit=args.limit,
+         dry_run=args.dry_run)
     conn.close()
