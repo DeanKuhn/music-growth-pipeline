@@ -27,6 +27,8 @@ def seed(conn, cur, start, end):
                 INSERT INTO weekly_charts (artist_id, rank, page,
                     snapshot_date)
                 VALUES (%s, %s, %s, %s)
+                ON CONFLICT (artist_id, page, rank, snapshot_date)
+                    DO NOTHING
             """, (artist_id, rank, page, snapshot_date))
 
 
