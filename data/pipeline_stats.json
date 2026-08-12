@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10",
+  "generated_at": "2026-08-11",
   "summary": {
     "artist_count": 37435,
     "weeks_tracked": 15,
@@ -8,48 +8,48 @@
   "growth_by_size_quintile": [
     {
       "quintile": 1,
-      "artist_count": 7487,
+      "artist_count": 4347,
       "band_min": 1,
-      "band_max": 28203,
-      "avg_pct_growth": 56.95,
-      "median_pct_growth": 0.0,
-      "p90_pct_growth": 2.69
+      "band_max": 69760,
+      "avg_pct_growth": 102.95,
+      "median_pct_growth": 2.94,
+      "p90_pct_growth": 18.19
     },
     {
       "quintile": 2,
-      "artist_count": 7487,
-      "band_min": 28207,
-      "band_max": 67632,
-      "avg_pct_growth": 2.75,
-      "median_pct_growth": 0.0,
-      "p90_pct_growth": 6.89
+      "artist_count": 4347,
+      "band_min": 69762,
+      "band_max": 136909,
+      "avg_pct_growth": 4.51,
+      "median_pct_growth": 2.58,
+      "p90_pct_growth": 10.77
     },
     {
       "quintile": 3,
-      "artist_count": 7487,
-      "band_min": 67636,
-      "band_max": 136251,
-      "avg_pct_growth": 2.69,
-      "median_pct_growth": 0.86,
-      "p90_pct_growth": 7.45
+      "artist_count": 4346,
+      "band_min": 136917,
+      "band_max": 234443,
+      "avg_pct_growth": 3.23,
+      "median_pct_growth": 2.21,
+      "p90_pct_growth": 6.83
     },
     {
       "quintile": 4,
-      "artist_count": 7487,
-      "band_min": 136284,
-      "band_max": 293071,
-      "avg_pct_growth": 2.5,
-      "median_pct_growth": 1.6,
-      "p90_pct_growth": 5.84
+      "artist_count": 4346,
+      "band_min": 234449,
+      "band_max": 467069,
+      "avg_pct_growth": 2.65,
+      "median_pct_growth": 1.88,
+      "p90_pct_growth": 5.28
     },
     {
       "quintile": 5,
-      "artist_count": 7487,
-      "band_min": 293112,
+      "artist_count": 4346,
+      "band_min": 467165,
       "band_max": 9126505,
       "avg_pct_growth": 2.23,
-      "median_pct_growth": 1.72,
-      "p90_pct_growth": 4.37
+      "median_pct_growth": 1.83,
+      "p90_pct_growth": 4.17
     }
   ],
   "top_growing_artists": [
