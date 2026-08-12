@@ -3,13 +3,7 @@ import type { Metadata } from 'next';
 import { getGenres } from '@/lib/api';
 import { formatListeners, formatPct } from '@/lib/format';
 
-// Not statically prerendered: a build has no live deployment yet for this
-// page's self-fetch (getGenres -> /api/genres) to hit, unlike
-// /artist/[slug] and /genres/[g] whose generateStaticParams falls back to
-// [] on that same failure. Rendered per-request instead; the underlying
-// fetch still carries next:{revalidate:3600} (see lib/api.ts) and the
-// /api/genres route's own Cache-Control, so this doesn't add real load.
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: 'Genres',

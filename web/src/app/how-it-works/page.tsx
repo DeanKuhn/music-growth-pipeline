@@ -5,7 +5,7 @@ import { StatTile, StatTileGrid } from '@/components/StatTile';
 import { formatDate } from '@/lib/format';
 import { repoFile } from '@/lib/repo';
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: 'How it works',

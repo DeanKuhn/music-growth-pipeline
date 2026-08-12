@@ -26,7 +26,7 @@ import {
 } from '@/lib/sql-snippets';
 import { formatListeners, formatPct, formatDate } from '@/lib/format';
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   try {

@@ -4,7 +4,7 @@ import { StatTile, StatTileGrid } from '@/components/StatTile';
 import { getStats } from '@/lib/api';
 import { formatListeners, formatDate } from '@/lib/format';
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export default async function HomePage() {
   const stats = await getStats().catch(() => null);
