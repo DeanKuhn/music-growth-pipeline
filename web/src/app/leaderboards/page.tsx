@@ -4,7 +4,7 @@ import { getLeaderboard } from '@/lib/api';
 import { SIZE_BANDS, LEADERBOARD_SLICE_TYPES } from '@/lib/validation';
 import { formatListeners, formatPct } from '@/lib/format';
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: 'Leaderboards',

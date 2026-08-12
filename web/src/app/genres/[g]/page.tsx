@@ -5,7 +5,7 @@ import { getGenres } from '@/lib/api';
 import { StatTile, StatTileGrid } from '@/components/StatTile';
 import { formatListeners, formatPct } from '@/lib/format';
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   try {
