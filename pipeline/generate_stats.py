@@ -57,6 +57,7 @@ query = """
                 as latest_listeners
         from bounded
         group by artist_id
+        having count(distinct snapshot_date) >= 6
     ),
 
     growth as (
