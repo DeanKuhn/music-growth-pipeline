@@ -30,7 +30,7 @@ export const revalidate = 86400;
 
 export async function generateStaticParams() {
   try {
-    const board = await getLeaderboard('most_listeners', 'all', 100);
+    const board = await getLeaderboard('most_listeners', 'all', 500);
     return board.results.map((r) => ({ slug: r.slug }));
   } catch {
     return [];
