@@ -3,4 +3,3 @@ __pycache__/
 target/
 dbt_packages/
 logs/
-data/orphan_artists_backup.json
