@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-16",
+  "generated_at": "2026-08-23",
   "summary": {
     "artist_count": 37435,
-    "weeks_tracked": 16,
-    "latest_snapshot": "2026-08-16"
+    "weeks_tracked": 17,
+    "latest_snapshot": "2026-08-23"
   },
   "growth_by_size_quintile": [
     {
@@ -11,134 +11,134 @@
       "artist_count": 4347,
       "band_min": 1,
       "band_max": 69760,
-      "avg_pct_growth": 103.25,
-      "median_pct_growth": 3.02,
-      "p90_pct_growth": 18.82
+      "avg_pct_growth": 103.6,
+      "median_pct_growth": 3.14,
+      "p90_pct_growth": 19.61
     },
     {
       "quintile": 2,
       "artist_count": 4347,
       "band_min": 69762,
       "band_max": 136909,
-      "avg_pct_growth": 4.64,
-      "median_pct_growth": 2.66,
-      "p90_pct_growth": 11.04
+      "avg_pct_growth": 4.8,
+      "median_pct_growth": 2.76,
+      "p90_pct_growth": 11.43
     },
     {
       "quintile": 3,
       "artist_count": 4346,
       "band_min": 136917,
       "band_max": 234443,
-      "avg_pct_growth": 3.32,
-      "median_pct_growth": 2.27,
-      "p90_pct_growth": 7.02
+      "avg_pct_growth": 3.44,
+      "median_pct_growth": 2.36,
+      "p90_pct_growth": 7.23
     },
     {
       "quintile": 4,
       "artist_count": 4346,
       "band_min": 234449,
       "band_max": 467069,
-      "avg_pct_growth": 2.72,
-      "median_pct_growth": 1.94,
-      "p90_pct_growth": 5.43
+      "avg_pct_growth": 2.82,
+      "median_pct_growth": 2.01,
+      "p90_pct_growth": 5.61
     },
     {
       "quintile": 5,
       "artist_count": 4346,
       "band_min": 467165,
       "band_max": 9126505,
-      "avg_pct_growth": 2.3,
-      "median_pct_growth": 1.89,
-      "p90_pct_growth": 4.3
+      "avg_pct_growth": 2.38,
+      "median_pct_growth": 1.96,
+      "p90_pct_growth": 4.46
     }
   ],
   "top_growing_artists": [
     {
       "artist_name": "ridgeclub",
       "starting_count": 14848,
-      "ending_count": 121103,
-      "total_pct_growth": 715.62
+      "ending_count": 123862,
+      "total_pct_growth": 734.2
     },
     {
       "artist_name": "Alyssa Grace",
       "starting_count": 17194,
-      "ending_count": 79938,
-      "total_pct_growth": 364.92
+      "ending_count": 82576,
+      "total_pct_growth": 380.26
     },
     {
       "artist_name": "[redacted]",
       "starting_count": 30965,
-      "ending_count": 143527,
-      "total_pct_growth": 363.51
+      "ending_count": 146556,
+      "total_pct_growth": 373.3
     },
     {
       "artist_name": "Laurinha Costa",
       "starting_count": 14827,
-      "ending_count": 48319,
-      "total_pct_growth": 225.89
+      "ending_count": 48780,
+      "total_pct_growth": 228.99
     },
     {
       "artist_name": "The Bausa",
       "starting_count": 23668,
-      "ending_count": 76244,
-      "total_pct_growth": 222.14
+      "ending_count": 77027,
+      "total_pct_growth": 225.45
     },
     {
       "artist_name": "Alexandra Căpitănescu",
       "starting_count": 15575,
-      "ending_count": 50161,
-      "total_pct_growth": 222.06
+      "ending_count": 50318,
+      "total_pct_growth": 223.07
     },
     {
       "artist_name": "Dara",
       "starting_count": 44367,
-      "ending_count": 124890,
-      "total_pct_growth": 181.49
+      "ending_count": 125341,
+      "total_pct_growth": 182.51
     },
     {
       "artist_name": "dodree",
       "starting_count": 7669,
-      "ending_count": 20481,
-      "total_pct_growth": 167.06
+      "ending_count": 20657,
+      "total_pct_growth": 169.36
     },
     {
       "artist_name": "El De Las R's",
       "starting_count": 62367,
-      "ending_count": 156236,
-      "total_pct_growth": 150.51
+      "ending_count": 157563,
+      "total_pct_growth": 152.64
     },
     {
       "artist_name": "Nelson Noise",
       "starting_count": 17624,
-      "ending_count": 42492,
-      "total_pct_growth": 141.1
+      "ending_count": 42882,
+      "total_pct_growth": 143.32
     }
   ],
   "genre_growth": [
     {
       "genre": "edm",
       "artist_count": 503,
-      "median_total_pct_growth": 3.58
+      "median_total_pct_growth": 3.72
     },
     {
       "genre": "japanese",
       "artist_count": 340,
-      "median_total_pct_growth": 3.54
+      "median_total_pct_growth": 3.71
     },
     {
       "genre": "j-pop",
       "artist_count": 230,
-      "median_total_pct_growth": 3.28
+      "median_total_pct_growth": 3.41
     },
     {
       "genre": "pop",
       "artist_count": 523,
-      "median_total_pct_growth": 3.22
+      "median_total_pct_growth": 3.33
     },
     {
       "genre": "american",
       "artist_count": 457,
-      "median_total_pct_growth": 2.99
+      "median_total_pct_growth": 3.09
     }
   ]
 }
