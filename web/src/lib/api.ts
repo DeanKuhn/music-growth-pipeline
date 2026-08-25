@@ -1,19 +1,5 @@
-// Server components fetch the app's own /api/* routes rather than querying
-// api_* tables directly — the route handlers are the single source of truth
-// for each query (and what the "show the SQL" panel mirrors), so pages don't
-// duplicate that SQL.
-
-function getBaseUrl(): string {
-  // SITE_URL, not VERCEL_URL: Vercel's Deployment Protection blocks
-  // unauthenticated requests to every *.vercel.app hostname by default —
-  // custom domains are exempt, but VERCEL_URL always points to a protected
-  // one. A self-fetch through it gets redirected to Vercel's login page
-  // instead of the JSON it asked for, and JSON.parse() on that HTML throws.
-  // Set SITE_URL to the public custom domain in Vercel's env vars.
-  if (process.env.SITE_URL) return process.env.SITE_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 3000}`;
-}
+import { extractArtistIdFromSlug } from '@/lib/validation';
+import * as queries from '@/lib/queries';
 
 export class ApiError extends Error {
   status: number;
@@ -25,14 +11,6 @@ export class ApiError extends Error {
 
 const NUMERIC_STRING = /^-?\d+(\.\d+)?$/;
 
-// The Neon HTTP driver returns Postgres bigint/numeric columns as JSON
-// strings (to avoid silent precision loss on huge bigints), not JS numbers.
-// Every route handler passes rows straight through, so every numeric-typed
-// column in api_* arrives client-side as a string. Chart components call
-// .toFixed()/scale math on these values, so coerce them back to numbers
-// once here rather than defensively in every consumer. Date strings
-// ("2026-05-10") and slugs ("7512-radiohead") don't match the pattern and
-// pass through unchanged.
 export function coerceNumericStrings<T>(value: T): T {
   if (Array.isArray(value)) {
     return value.map((v) => coerceNumericStrings(v)) as unknown as T;
@@ -50,19 +28,10 @@ export function coerceNumericStrings<T>(value: T): T {
   return value;
 }
 
-async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${getBaseUrl()}${path}`, {
-    // Server-side fetch already inherits the route's own Cache-Control on
-    // the client; this just tells Next's fetch cache to behave the same way
-    // for prerendering/ISR of these pages. Tagged 'marts' so the weekly
-    // workflow's POST /api/revalidate (after generate_stats.py + dbt run)
-    // actually invalidates it instead of waiting out the 3600s window.
-    next: { revalidate: 86400, tags: ['marts'] },
-  });
-  if (res.status === 404) throw new ApiError(404, 'not found');
-  if (!res.ok) throw new ApiError(res.status, `upstream ${res.status}`);
-  const json = await res.json();
-  return coerceNumericStrings(json) as T;
+function resolveArtistId(slug: string): number {
+  const artistId = extractArtistIdFromSlug(slug);
+  if (artistId === null) throw new ApiError(400, 'bad slug');
+  return artistId;
 }
 
 export interface ArtistProfile {
@@ -226,36 +195,88 @@ export interface PipelineHealth {
   built_at: string;
 }
 
-export function getArtistProfile(slug: string) {
-  return getJson<ArtistProfile>(`/api/artists/${slug}`);
+export async function getArtistProfile(slug: string): Promise<ArtistProfile> {
+  const artistId = resolveArtistId(slug);
+  const row = await queries.queryArtistProfile(artistId);
+  if (!row) throw new ApiError(404, 'not found');
+  return coerceNumericStrings({
+    ...row,
+    insufficient_data: (row.weeks_tracked ?? 0) < 3,
+  }) as ArtistProfile;
 }
 
-export function getArtistTimeseries(slug: string) {
-  return getJson<TimeseriesResponse>(`/api/artists/${slug}/timeseries`);
+export async function getArtistTimeseries(slug: string): Promise<TimeseriesResponse> {
+  const artistId = resolveArtistId(slug);
+  const rows = await queries.queryArtistTimeseries(artistId);
+  if (rows.length === 0 && !(await queries.queryArtistExists(artistId))) {
+    throw new ApiError(404, 'not found');
+  }
+  return { artist_id: artistId, series: coerceNumericStrings(rows) };
 }
 
-export function getArtistCompare(slug: string, vs: 'genre' | 'size_band' | 'similar') {
-  return getJson<CompareResponse>(`/api/artists/${slug}/compare?vs=${vs}`);
-}
+export async function getArtistCompare(
+  slug: string,
+  vs: 'genre' | 'size_band' | 'similar'
+): Promise<CompareResponse> {
+  const artistId = resolveArtistId(slug);
+  const profile = await queries.queryArtistProfile(artistId);
+  if (!profile) throw new ApiError(404, 'not found');
 
-export function getArtistSimilar(slug: string) {
-  return getJson<SimilarResponse>(`/api/artists/${slug}/similar`);
-}
+  let rows;
+  if (vs === 'similar') {
+    rows = await queries.queryArtistCompareSimilar(artistId);
+  } else {
+    const cohortKey = vs === 'genre' ? profile.primary_genre : profile.size_band;
+    rows = await queries.queryArtistCompareCohort(artistId, vs, cohortKey);
+  }
 
-export function search(q: string, limit = 10) {
-  return getJson<SearchResponse>(`/api/search?q=${encodeURIComponent(q)}&limit=${limit}`);
-}
-
-export function getLeaderboard(sliceType: string, sliceKey: string, limit = 20) {
-  return getJson<LeaderboardResponse>(
-    `/api/leaderboards?slice_type=${encodeURIComponent(sliceType)}&slice_key=${encodeURIComponent(sliceKey)}&limit=${limit}`
+  const cohortAvailable = rows.some(
+    (r: Record<string, unknown>) => r.median_indexed !== null
   );
+
+  return coerceNumericStrings({
+    artist_id: artistId,
+    vs,
+    insufficient_data: (profile.weeks_tracked ?? 0) < 3,
+    cohort_available: cohortAvailable,
+    series: rows,
+  }) as CompareResponse;
 }
 
-export function getGenres() {
-  return getJson<GenresResponse>('/api/genres');
+export async function getArtistSimilar(slug: string): Promise<SimilarResponse> {
+  const artistId = resolveArtistId(slug);
+  const rows = await queries.queryArtistSimilar(artistId);
+  if (rows.length === 0 && !(await queries.queryArtistExists(artistId))) {
+    throw new ApiError(404, 'not found');
+  }
+  return { artist_id: artistId, similar: coerceNumericStrings(rows) };
 }
 
-export function getStats() {
-  return getJson<PipelineHealth>('/api/stats');
+export async function search(q: string, limit = 10): Promise<SearchResponse> {
+  const result = await queries.querySearch(q, limit);
+  return coerceNumericStrings(result) as SearchResponse;
+}
+
+export async function getLeaderboard(
+  sliceType: string,
+  sliceKey: string,
+  limit = 20
+): Promise<LeaderboardResponse> {
+  const rows = await queries.queryLeaderboard(sliceType, sliceKey, limit);
+  return {
+    slice_type: sliceType,
+    slice_key: sliceKey,
+    results: coerceNumericStrings(rows),
+  };
+}
+
+export async function getGenres(): Promise<GenresResponse> {
+  const rows = await queries.queryGenres();
+  return { genres: coerceNumericStrings(rows) };
+}
+
+export async function getStats(): Promise<PipelineHealth> {
+  const row = await queries.queryStats();
+  if (!row) throw new ApiError(404, 'no stats');
+  return coerceNumericStrings(row) as PipelineHealth;
 }
