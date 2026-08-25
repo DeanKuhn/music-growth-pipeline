@@ -10,7 +10,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
-import type { TimeseriesPoint } from '@/lib/api';
+import type { TimeseriesPoint } from '@/lib/api-types';
 import { formatListeners, formatDate } from '@/lib/format';
 
 export function GrowthChart({ series }: { series: TimeseriesPoint[] }) {

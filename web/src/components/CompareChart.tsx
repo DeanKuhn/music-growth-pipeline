@@ -13,7 +13,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import type { CompareResponse } from '@/lib/api';
+import type { CompareResponse } from '@/lib/api-types';
 import { formatDate } from '@/lib/format';
 
 const TABS: { key: 'genre' | 'size_band' | 'similar'; label: string }[] = [

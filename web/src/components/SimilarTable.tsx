@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { SimilarArtist } from '@/lib/api';
+import type { SimilarArtist } from '@/lib/api-types';
 import { formatListeners, formatPct } from '@/lib/format';
 
 // A true per-row sparkline needs that artist's own weekly series — 20 extra
