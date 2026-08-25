@@ -56,7 +56,7 @@ Since the API only returns cumulative all-time stats (no built-in time series), 
 | Analytical queries | SQL |
 | Automation | GitHub Actions (weekly cron) |
 | Reporting | Power BI (live Postgres connection to Neon) |
-| Web app | Next.js 15 (App Router, TypeScript), deployed on Vercel |
+| Web app | Next.js 15 (App Router, TypeScript), self-hosted on EC2 behind Caddy |
 
 ## Schema
 
@@ -234,7 +234,7 @@ A GitHub Action runs every Sunday at 9am UTC and chains four steps:
 3. `pipeline/generate_stats.py` — queries marts, writes `data/pipeline_stats.json`
 4. `git push` — commits the updated JSON to this repo
 
-[music.deanslist.dev](https://music.deanslist.dev) reads live from Postgres via the Next.js API routes, so it reflects new snapshots as soon as the weekly job lands (bounded by a 1-day response cache). The portfolio site at [deanslist.dev](https://deanslist.dev) additionally fetches `pipeline_stats.json` at build time and rebuilds nightly at 3:30am UTC.
+[music.deanslist.dev](https://music.deanslist.dev) reads live from Postgres, so it reflects new snapshots as soon as the weekly job lands (bounded by a 1-day response cache). The app is self-hosted on EC2 behind Caddy (auto-HTTPS) and deployed via `./deploy.sh`. The portfolio site at [deanslist.dev](https://deanslist.dev) additionally fetches `pipeline_stats.json` at build time and rebuilds nightly at 3:30am UTC.
 
 A Power BI report connects directly to the Neon database via a live Postgres connection and surfaces the core findings across two pages: an overview with growth trends by size band and genre, and an artist drillthrough showing individual listener timelines.
 
