@@ -211,7 +211,7 @@ export async function getArtistTimeseries(slug: string): Promise<TimeseriesRespo
   if (rows.length === 0 && !(await queries.queryArtistExists(artistId))) {
     throw new ApiError(404, 'not found');
   }
-  return { artist_id: artistId, series: coerceNumericStrings(rows) };
+  return { artist_id: artistId, series: coerceNumericStrings(rows) as TimeseriesPoint[] };
 }
 
 export async function getArtistCompare(
@@ -249,7 +249,7 @@ export async function getArtistSimilar(slug: string): Promise<SimilarResponse> {
   if (rows.length === 0 && !(await queries.queryArtistExists(artistId))) {
     throw new ApiError(404, 'not found');
   }
-  return { artist_id: artistId, similar: coerceNumericStrings(rows) };
+  return { artist_id: artistId, similar: coerceNumericStrings(rows) as SimilarArtist[] };
 }
 
 export async function search(q: string, limit = 10): Promise<SearchResponse> {
@@ -266,13 +266,13 @@ export async function getLeaderboard(
   return {
     slice_type: sliceType,
     slice_key: sliceKey,
-    results: coerceNumericStrings(rows),
+    results: coerceNumericStrings(rows) as LeaderboardEntry[],
   };
 }
 
 export async function getGenres(): Promise<GenresResponse> {
   const rows = await queries.queryGenres();
-  return { genres: coerceNumericStrings(rows) };
+  return { genres: coerceNumericStrings(rows) as Genre[] };
 }
 
 export async function getStats(): Promise<PipelineHealth> {
