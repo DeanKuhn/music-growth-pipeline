@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
+import { queryStats } from '@/lib/queries';
 import { serverError } from '@/lib/errors';
 import { STANDARD_CACHE_CONTROL } from '@/lib/cache';
 import { withRateLimit } from '@/lib/rate-limit';
@@ -7,14 +7,14 @@ import { withRateLimit } from '@/lib/rate-limit';
 export const runtime = 'edge';
 
 async function handler(_req: NextRequest) {
-  let rows;
+  let row;
   try {
-    rows = await sql`select * from api_pipeline_health`;
+    row = await queryStats();
   } catch (err) {
     return serverError(err);
   }
 
-  const response = NextResponse.json(rows[0] ?? null);
+  const response = NextResponse.json(row ?? null);
   response.headers.set('Cache-Control', STANDARD_CACHE_CONTROL);
   return response;
 }
