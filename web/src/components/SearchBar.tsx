@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { coerceNumericStrings, type SearchResponse } from '@/lib/api';
+import { coerceNumericStrings, type SearchResponse } from '@/lib/api-types';
 import { formatListeners } from '@/lib/format';
 
 export function SearchBar({ autoFocus = false }: { autoFocus?: boolean }) {
