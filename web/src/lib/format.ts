@@ -11,9 +11,10 @@ export function formatPct(n: number | null | undefined, opts: { signed?: boolean
   return `${sign}${n.toFixed(2)}%`;
 }
 
-export function formatDate(d: string | Date | null | undefined): string {
-  if (!d) return '—';
-  const date = typeof d === 'string' ? new Date(d) : d;
+export function formatDate(d: string | number | Date | null | undefined): string {
+  if (d == null) return '—';
+  const date = d instanceof Date ? d : new Date(String(d));
+  if (isNaN(date.getTime())) return '—';
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
