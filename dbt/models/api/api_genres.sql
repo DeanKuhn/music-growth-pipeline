@@ -8,15 +8,7 @@
 -- drops genres under 50 qualifying artists. The left join means small/new
 -- genres appear with growth columns null rather than vanishing outright.
 
-{{
-    config(
-        materialized='table',
-        indexes=[
-            {'columns': ['genre_id'], 'unique': True},
-            {'columns': ['genre'], 'unique': True},
-        ]
-    )
-}}
+{{ config(materialized='table') }}
 
 with stats as (
 

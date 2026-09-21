@@ -7,14 +7,7 @@
 -- percentage board forever), and artists without the full window, whose
 -- growth covers fewer weeks than everyone they are ranked against.
 
-{{
-    config(
-        materialized='table',
-        indexes=[
-            {'columns': ['slice_type', 'slice_key', 'rank'], 'unique': True},
-        ]
-    )
-}}
+{{ config(materialized='table') }}
 
 with candidates as (
 

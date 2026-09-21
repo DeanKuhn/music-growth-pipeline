@@ -8,16 +8,7 @@
 -- chart", and it spans 1 → 5.5M listeners, so it is an observation gap rather
 -- than a peer of indie/mainstream. See findings.md issue #2.
 
-{{
-    config(
-        materialized='table',
-        indexes=[
-            {'columns': ['cohort_type', 'cohort_key', 'snapshot_date'],
-             'unique': True},
-            {'columns': ['snapshot_date']},
-        ]
-    )
-}}
+{{ config(materialized='table') }}
 
 with base as (
 
