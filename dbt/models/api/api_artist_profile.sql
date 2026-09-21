@@ -1,13 +1,4 @@
-{{
-    config(
-        materialized='table',
-        indexes=[
-            {'columns': ['artist_id'], 'unique': True},
-            {'columns': ['slug'], 'unique': True},
-            {'columns': ['size_band']},
-        ]
-    )
-}}
+{{ config(materialized='table') }}
 
 with base as (
 
@@ -111,8 +102,6 @@ joined as (
 
 ),
 
--- Ranked within size_band, not tier. "unranked" is an observation gap that
--- spans the full listener range, so a percentile against it is meaningless.
 ranked as (
 
     select

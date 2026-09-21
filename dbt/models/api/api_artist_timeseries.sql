@@ -1,12 +1,4 @@
-{{
-    config(
-        materialized='table',
-        indexes=[
-            {'columns': ['artist_id', 'snapshot_date'], 'unique': True},
-            {'columns': ['snapshot_date']},
-        ]
-    )
-}}
+{{ config(materialized='table') }}
 
 with snapshots as (
 

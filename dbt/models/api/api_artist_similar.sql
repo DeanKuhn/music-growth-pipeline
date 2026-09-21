@@ -8,15 +8,7 @@
 -- symmetric in meaning, so both directions are unioned here and the pair is
 -- deduped on the higher score.
 
-{{
-    config(
-        materialized='table',
-        indexes=[
-            {'columns': ['artist_id', 'rank']},
-            {'columns': ['slug']},
-        ]
-    )
-}}
+{{ config(materialized='table') }}
 
 with edges as (
 
