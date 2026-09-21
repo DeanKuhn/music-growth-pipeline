@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-HOST="${DEPLOY_HOST:-ubuntu@music.deanslist.dev}"
-KEY="${DEPLOY_KEY:-~/.ssh/bibbas-server.pem}"
+HOST="${DEPLOY_HOST:-bibba@music.deanslist.dev}"
 
 echo "Deploying to $HOST..."
 
-ssh -i "$KEY" "$HOST" 'bash -s' <<'REMOTE'
+ssh "$HOST" 'bash -s' <<'REMOTE'
 set -euo pipefail
 cd ~/music-growth-pipeline
 git pull --ff-only
