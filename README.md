@@ -5,10 +5,10 @@ A data pipeline + dbt project + public web app built on Last.fm data to find out
 
 [![Live Site](https://img.shields.io/badge/live_site-music.deanslist.dev-8b5cf6)](https://music.deanslist.dev)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
-![Postgres](https://img.shields.io/badge/Postgres-Neon-336791?logo=postgresql&logoColor=white)
+![Postgres](https://img.shields.io/badge/Postgres-18-336791?logo=postgresql&logoColor=white)
 ![dbt](https://img.shields.io/badge/dbt-postgres-FF694B?logo=dbt&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/automation-weekly_cron-2088FF?logo=githubactions&logoColor=white)
+![Hetzner](https://img.shields.io/badge/hosting-Hetzner-D50C2D)
 
 ## The Finding
 
@@ -26,11 +26,11 @@ No reversals at any step. Smaller artists also carry a fatter upside tail — P9
 
 ```mermaid
 flowchart LR
-    A[Last.fm API] -->|Python| B[(Postgres / Neon)]
+    A[Last.fm API] -->|Python| B[(Postgres)]
     B -->|dbt staging + marts| C[(Serving layer)]
     C --> D[Next.js app<br/>music.deanslist.dev]
     C --> E[Power BI report]
-    F[GitHub Actions<br/>weekly cron] -.triggers.-> A
+    F[Cron<br/>weekly] -.triggers.-> A
 ```
 
 The API only returns cumulative all-time stats, so the pipeline snapshots each artist weekly and builds a longitudinal dataset via dbt. The web app and Power BI report read from a narrow, pre-joined serving layer — never directly from the marts.
@@ -41,12 +41,12 @@ The API only returns cumulative all-time stats, so the pipeline snapshots each a
 |---|---|
 | Data source | Last.fm API (read-only, key auth) |
 | Ingestion | Python |
-| Storage | Postgres (hosted on Neon) |
+| Storage | Postgres (self-hosted) |
 | Transformation | dbt (dbt-postgres) |
-| Automation | GitHub Actions (weekly cron) |
+| Automation | Cron (weekly, on-server) |
 | Reporting | Power BI (live Postgres connection) |
 | Web app | Next.js 15 (App Router, TypeScript) |
-| Hosting | EC2 (Ubuntu) behind Caddy (auto-HTTPS), deployed via `deploy.sh` |
+| Hosting | Hetzner Cloud behind Caddy (auto-HTTPS), deployed via `deploy.sh` |
 
 ## Data
 
@@ -88,15 +88,14 @@ dbt run --project-dir dbt
 
 ## Automation
 
-A GitHub Action runs every Sunday at 9 AM UTC:
-1. `snapshot_artists.py` — snapshots all artists into Neon
+A cron job on the Hetzner server runs every Sunday at 9 AM UTC (`weekly_snapshot.sh`):
+1. `snapshot_artists.py` — snapshots all artists
 2. `dbt run` — rebuilds all models
 3. `generate_stats.py` — writes `data/pipeline_stats.json`
 4. `git push` — commits the updated stats JSON
+5. Restarts the web app
 
-[music.deanslist.dev](https://music.deanslist.dev) reads live from Postgres and reflects new snapshots after the weekly job (bounded by a 1-day response cache). The app runs on EC2 behind Caddy with auto-HTTPS; deploy with `./deploy.sh`.
-
-Required GitHub secrets: `LASTFM_API_KEY`, `DATABASE_URL`, `PROFANITY_PATTERN`.
+[music.deanslist.dev](https://music.deanslist.dev) reads live from Postgres and reflects new snapshots after the weekly job (bounded by a 1-hour response cache). The app runs on Hetzner behind Caddy with auto-HTTPS; deploy with `./deploy.sh`.
 
 ## What's Next
 
