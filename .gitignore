@@ -4,4 +4,6 @@ target/
 dbt_packages/
 logs/
 data/orphan_artists_backup.json
-docs/
+docs/stage-b-plan.md
+docs/webapp-implementation-plan.md
+
