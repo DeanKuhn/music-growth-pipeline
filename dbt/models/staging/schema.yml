@@ -2,7 +2,6 @@ version: 2
 
 sources:
   - name: public
-    database: neondb
     schema: public
     tables:
       - name: artists
