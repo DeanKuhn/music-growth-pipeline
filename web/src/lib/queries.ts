@@ -1,21 +1,22 @@
 import { sql } from '@/lib/db';
+import type { Row } from 'postgres';
 
 export async function queryArtistProfile(artistId: number) {
   const rows = await sql`
     select * from api_artist_profile where artist_id = ${artistId}
   `;
-  return rows[0] ?? null;
+  return (rows[0] as Row | undefined) ?? null;
 }
 
-export async function queryArtistTimeseries(artistId: number) {
-  return sql`
+export async function queryArtistTimeseries(artistId: number): Promise<Row[]> {
+  return [...await sql`
     select
       snapshot_date, week_number, listeners, playcount,
       listener_delta, listener_pct_change, listeners_indexed
     from api_artist_timeseries
     where artist_id = ${artistId}
     order by snapshot_date asc
-  `;
+  `];
 }
 
 export async function queryArtistExists(artistId: number) {
@@ -25,8 +26,8 @@ export async function queryArtistExists(artistId: number) {
   return rows.length > 0;
 }
 
-export async function queryArtistCompareSimilar(artistId: number) {
-  return sql`
+export async function queryArtistCompareSimilar(artistId: number): Promise<Row[]> {
+  return [...await sql`
     with peers as (
       select similar_artist_id as artist_id
       from api_artist_similar
@@ -53,15 +54,15 @@ export async function queryArtistCompareSimilar(artistId: number) {
     left join peer_agg pa on pa.snapshot_date = ts.snapshot_date
     where ts.artist_id = ${artistId}
     order by ts.snapshot_date asc
-  `;
+  `];
 }
 
 export async function queryArtistCompareCohort(
   artistId: number,
   vs: string,
   cohortKey: string | null
-) {
-  return sql`
+): Promise<Row[]> {
+  return [...await sql`
     select
       ts.snapshot_date, ts.week_number, ts.listeners, ts.listeners_indexed,
       cw.artist_count, cw.p25_indexed, cw.median_indexed, cw.p75_indexed
@@ -72,11 +73,11 @@ export async function queryArtistCompareCohort(
      and cw.snapshot_date = ts.snapshot_date
     where ts.artist_id = ${artistId}
     order by ts.snapshot_date asc
-  `;
+  `];
 }
 
-export async function queryArtistSimilar(artistId: number) {
-  return sql`
+export async function queryArtistSimilar(artistId: number): Promise<Row[]> {
+  return [...await sql`
     select
       similar_artist_id, slug, display_name, size_band,
       latest_listeners, total_pct_growth, weeks_tracked,
@@ -84,26 +85,26 @@ export async function queryArtistSimilar(artistId: number) {
     from api_artist_similar
     where artist_id = ${artistId}
     order by rank asc
-  `;
+  `];
 }
 
-export async function queryGenres() {
-  return sql`
+export async function queryGenres(): Promise<Row[]> {
+  return [...await sql`
     select
       genre_id, genre, artist_count, avg_listeners, avg_plays_per_listener,
       small_count, large_count, avg_total_pct_growth, median_total_pct_growth,
       growth_avg_weekly_pct_change
     from api_genres
     order by avg_listeners desc
-  `;
+  `];
 }
 
 export async function queryLeaderboard(
   sliceType: string,
   sliceKey: string,
   limit: number
-) {
-  return sql`
+): Promise<Row[]> {
+  return [...await sql`
     select
       rank, metric_value, artist_id, slug, display_name, size_band,
       primary_genre, latest_listeners, total_listener_delta,
@@ -112,11 +113,11 @@ export async function queryLeaderboard(
     where slice_type = ${sliceType} and slice_key = ${sliceKey}
     order by rank asc
     limit ${limit}
-  `;
+  `];
 }
 
 export async function querySearch(q: string, limit: number) {
-  const rows = await sql`
+  const rows = [...await sql`
     select
       artist_id, slug, display_name, size_band, latest_listeners,
       listener_percentile, weeks_tracked,
@@ -130,24 +131,24 @@ export async function querySearch(q: string, limit: number) {
       similarity(name_norm, ${q}) desc,
       latest_listeners desc
     limit ${limit}
-  `;
+  `];
 
   if (rows.length > 0) {
     return { found: true as const, results: rows };
   }
 
-  const suggestions = await sql`
+  const suggestions = [...await sql`
     select artist_id, slug, display_name, latest_listeners
     from api_artist_search
     where similarity(name_norm, ${q}) > 0.15
     order by similarity(name_norm, ${q}) desc, latest_listeners desc
     limit 5
-  `;
+  `];
 
   return { found: false as const, suggestions };
 }
 
 export async function queryStats() {
   const rows = await sql`select * from api_pipeline_health`;
-  return rows[0] ?? null;
+  return (rows[0] as Row | undefined) ?? null;
 }
