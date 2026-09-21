@@ -5,7 +5,6 @@ import { badRequest, notFound, serverError } from '@/lib/errors';
 import { STANDARD_CACHE_CONTROL } from '@/lib/cache';
 import { withRateLimit } from '@/lib/rate-limit';
 
-export const runtime = 'edge';
 
 interface RouteContext {
   params: Promise<{ slug: string }>;

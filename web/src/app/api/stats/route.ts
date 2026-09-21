@@ -4,7 +4,6 @@ import { serverError } from '@/lib/errors';
 import { STANDARD_CACHE_CONTROL } from '@/lib/cache';
 import { withRateLimit } from '@/lib/rate-limit';
 
-export const runtime = 'edge';
 
 async function handler(_req: NextRequest) {
   let row;
