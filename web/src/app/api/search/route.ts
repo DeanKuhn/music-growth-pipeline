@@ -5,7 +5,6 @@ import { badRequest, serverError } from '@/lib/errors';
 import { SEARCH_CACHE_CONTROL } from '@/lib/cache';
 import { withRateLimit } from '@/lib/rate-limit';
 
-export const runtime = 'edge';
 
 async function handler(req: NextRequest) {
   const parsed = searchParamsSchema.safeParse({
