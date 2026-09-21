@@ -10,6 +10,9 @@ echo "=== Weekly snapshot started at $(date -u) ==="
 
 cd "$REPO_DIR"
 
+# Activate venv
+source .venv/bin/activate
+
 # Load environment
 set -a
 source .env
