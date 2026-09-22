@@ -1,4 +1,5 @@
 .env
+pytest.ini
 __pycache__/
 target/
 dbt_packages/
@@ -6,4 +7,4 @@ logs/
 data/orphan_artists_backup.json
 docs/stage-b-plan.md
 docs/webapp-implementation-plan.md
-
+web/data
