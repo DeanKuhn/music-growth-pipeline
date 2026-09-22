@@ -1,16 +1,17 @@
+"""Seed similar artists with each artist."""
+
 import logging
 import datetime
 import argparse
-import requests # type:ignore
+import requests  # type:ignore
 
-import psycopg2 # type:ignore
+import psycopg2  # type:ignore
 
 from db import get_conn, get_or_create_artist, TRACKED_ARTIST_FILTER
 from lastfm import ArtistNotFoundError, TokenBucket, get_with_retry
 
 
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 
@@ -53,17 +54,20 @@ def seed(conn, cur, limit=None):
                 try:
                     data = get_with_retry(
                         {"method": "artist.getSimilar", "mbid": mbid, "limit": 20},
-                        bucket=bucket, timeout=30
+                        bucket=bucket,
+                        timeout=30,
                     )
                 except ArtistNotFoundError:
                     data = get_with_retry(
                         {"method": "artist.getSimilar", "artist": name, "limit": 20},
-                        bucket=bucket, timeout=30
+                        bucket=bucket,
+                        timeout=30,
                     )
             else:
                 data = get_with_retry(
                     {"method": "artist.getSimilar", "artist": name, "limit": 20},
-                    bucket=bucket, timeout=30
+                    bucket=bucket,
+                    timeout=30,
                 )
         except ArtistNotFoundError as e:
             log.warning(f"Skipping {name}: {e}")
@@ -86,9 +90,7 @@ def seed(conn, cur, limit=None):
             similarity_score = similar_artist.get("match")
 
             if not similar_name or similarity_score is None:
-                log.warning(
-                    f"Skipping malformed similar artist entry for {name}."
-                )
+                log.warning(f"Skipping malformed similar artist entry for {name}.")
                 continue
 
             try:
@@ -96,20 +98,27 @@ def seed(conn, cur, limit=None):
                     cur, similar_name, similar_mbid
                 )
 
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO artist_similarities (
                         artist_id, similar_artist_id, similar_name,
                         similar_mbid, similarity_score, fetched_at
                     )
                     VALUES (%s, %s, %s, %s, %s, %s)
                     ON CONFLICT (artist_id, similar_name) DO NOTHING
-                """, (artist_id, similar_artist_id, similar_name, similar_mbid,
-                      similarity_score, snapshot_date))
+                """,
+                    (
+                        artist_id,
+                        similar_artist_id,
+                        similar_name,
+                        similar_mbid,
+                        similarity_score,
+                        snapshot_date,
+                    ),
+                )
 
             except psycopg2.Error as e:
-                log.warning(
-                    f"Skipping similar artist {similar_name} for {name}: {e}"
-                )
+                log.warning(f"Skipping similar artist {similar_name} for {name}: {e}")
                 conn.rollback()
                 continue
 
@@ -127,7 +136,9 @@ def seed(conn, cur, limit=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Seed artists from Last.fm")
     parser.add_argument(
-        "--limit", type=int, default=None,
+        "--limit",
+        type=int,
+        default=None,
         help="Cap the number of artists processed this run.",
     )
     args = parser.parse_args()
@@ -137,3 +148,4 @@ if __name__ == "__main__":
     seed(conn, cur, limit=args.limit)
     conn.commit()
     conn.close()
+
