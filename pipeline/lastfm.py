@@ -1,3 +1,5 @@
+"""Basic last.fm functions shared throughout all api calling files."""
+
 import os
 import random
 import threading
@@ -22,15 +24,16 @@ NOT_FOUND_CODE = 6
 
 def _escape_literal_plus(params: dict) -> dict:
     return {
-        k: v.replace("+", "%2B") if isinstance(v, str) else v
-        for k, v in params.items()
+        k: v.replace("+", "%2B") if isinstance(v, str) else v for k, v in params.items()
     }
 
 
 def get(params: dict, timeout: int = 10) -> dict:
     response = requests.get(
-        BASE_URL, params=_escape_literal_plus({**COMMON_PARAMS, **params}),
-        timeout=timeout)
+        BASE_URL,
+        params=_escape_literal_plus({**COMMON_PARAMS, **params}),
+        timeout=timeout,
+    )
     response.raise_for_status()
     data = response.json()
     if "error" in data:
@@ -75,7 +78,7 @@ class TokenBucket:
 
 def _backoff_delay(attempt: int) -> float:
     """Jittered exponential backoff: ~2s, ~4s, ~8s (+0-0.5s jitter)."""
-    return (2 ** attempt) + random.uniform(0, 0.5)
+    return (2**attempt) + random.uniform(0, 0.5)
 
 
 def get_with_retry(
@@ -99,7 +102,8 @@ def get_with_retry(
             response = requester.get(
                 BASE_URL,
                 params=_escape_literal_plus({**COMMON_PARAMS, **params}),
-                timeout=timeout)
+                timeout=timeout,
+            )
         except requests.exceptions.RequestException:
             if attempt == attempts:
                 raise

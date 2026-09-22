@@ -1,3 +1,5 @@
+"""Creates tracked artists filter, and a way to know if an artist has already been created or not."""
+
 import os
 from dotenv import load_dotenv  # type:ignore
 import psycopg2  # type:ignore
@@ -23,10 +25,14 @@ TRACKED_ARTIST_FILTER = """(
 
 def get_or_create_artist(cur, name, mbid=None):
     """Return the artist id for this name, inserting if new."""
-    cur.execute("""
+    cur.execute(
+        """
         INSERT INTO artists (name, mbid) VALUES (%s, %s)
         ON CONFLICT (lower(btrim(name))) DO UPDATE
             SET mbid = COALESCE(artists.mbid, EXCLUDED.mbid)
         RETURNING id
-    """, (name, mbid))
+    """,
+        (name, mbid),
+    )
     return cur.fetchone()[0]
+

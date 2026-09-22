@@ -1,44 +1,47 @@
+"""Generate stats for weekly cron run that will populate port site fields.
+
+Tracks fastest growing artists and genres."""
+
 import json
 import os
-import psycopg2 # type:ignore
+import psycopg2
 from datetime import date
-from dotenv import load_dotenv #type:ignore
+from dotenv import load_dotenv
 import re
 
 load_dotenv()
 
-_pattern_str = os.getenv('PROFANITY_PATTERN', '')
-PROFANITY_PATTERN = re.compile(r'(' + _pattern_str + r')', re.IGNORECASE) \
-    if _pattern_str else None
+_pattern_str = os.getenv("PROFANITY_PATTERN", "")
+PROFANITY_PATTERN = (
+    re.compile(r"(" + _pattern_str + r")", re.IGNORECASE) if _pattern_str else None
+)
 
-SERIES_START_DATE = '2026-05-10'
+SERIES_START_DATE = "2026-05-10"
+
 
 def sanitize_name(name):
     if PROFANITY_PATTERN and PROFANITY_PATTERN.search(name):
-        return '[redacted]'
+        return "[redacted]"
     return name
 
-conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+
+conn = psycopg2.connect(os.getenv("DATABASE_URL"))
 cur = conn.cursor()
 
 stats = {}
-stats['generated_at'] = date.today().isoformat()
+stats["generated_at"] = date.today().isoformat()
 
 # --- SUMMARY ---
-cur.execute("""
-    select count(*), max(weeks_tracked) from artist_growth_summary
-""")
+cur.execute("select count(*), max(weeks_tracked) from artist_growth_summary")
 row = cur.fetchone()
-stats['summary'] = {
-    'artist_count': row[0], # type:ignore
-    'weeks_tracked': row[1] # type:ignore
+stats["summary"] = {
+    "artist_count": row[0],
+    "weeks_tracked": row[1],
 }
 
-cur.execute("""
-    select max(snapshot_date) from artist_snapshots
-""")
+cur.execute("select max(snapshot_date) from artist_snapshots")
 row = cur.fetchone()
-stats['summary']['latest_snapshot'] = row[0] # type:ignore
+stats["summary"]["latest_snapshot"] = row[0]
 
 # --- GROWTH BY SIZE QUINTILE ---
 query = """
@@ -95,15 +98,15 @@ query = """
 cur.execute(query, (SERIES_START_DATE,))
 
 rows = cur.fetchall()
-stats['growth_by_size_quintile'] = [
+stats["growth_by_size_quintile"] = [
     {
-        'quintile': int(row[0]),
-        'artist_count': int(row[1]),
-        'band_min': int(row[2]),
-        'band_max': int(row[3]),
-        'avg_pct_growth': float(row[4]),
-        'median_pct_growth': float(row[5]),
-        'p90_pct_growth': float(row[6])
+        "quintile": int(row[0]),
+        "artist_count": int(row[1]),
+        "band_min": int(row[2]),
+        "band_max": int(row[3]),
+        "avg_pct_growth": float(row[4]),
+        "median_pct_growth": float(row[5]),
+        "p90_pct_growth": float(row[6]),
     }
     for row in rows
 ]
@@ -123,12 +126,12 @@ cur.execute("""
     limit 10
 """)
 rows = cur.fetchall()
-stats['top_growing_artists'] = [
+stats["top_growing_artists"] = [
     {
-        'artist_name': sanitize_name(row[0]),
-        'starting_count': row[1],
-        'ending_count': row[2],
-        'total_pct_growth': float(row[3])
+        "artist_name": sanitize_name(row[0]),
+        "starting_count": row[1],
+        "ending_count": row[2],
+        "total_pct_growth": float(row[3]),
     }
     for row in rows
 ]
@@ -144,23 +147,20 @@ cur.execute("""
     limit 5
 """)
 rows = cur.fetchall()
-stats['genre_growth'] = [
-    {
-        'genre': row[0],
-        'artist_count': row[1],
-        'median_total_pct_growth': float(row[2])
-    }
+stats["genre_growth"] = [
+    {"genre": row[0], "artist_count": row[1], "median_total_pct_growth": float(row[2])}
     for row in rows
 ]
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-output_path = os.path.join(REPO_ROOT, 'data', 'pipeline_stats.json')
+output_path = os.path.join(REPO_ROOT, "data", "pipeline_stats.json")
 
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-with open(output_path, 'w') as f:
+with open(output_path, "w") as f:
     json.dump(stats, f, indent=2, default=str, ensure_ascii=False)
 
 print(f"Written to {output_path}")
 cur.close()
 conn.close()
+

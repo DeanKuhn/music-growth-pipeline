@@ -1,3 +1,5 @@
+"""Gets snapshot data for all artists weekly."""
+
 import argparse
 import datetime
 import logging
@@ -10,42 +12,42 @@ from psycopg2.extras import execute_values  # type:ignore
 from db import get_conn, TRACKED_ARTIST_FILTER
 from lastfm import ArtistNotFoundError, TokenBucket, get_with_retry
 
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 BATCH_SIZE = 500
 
 
 def week_anchor(today=None):
-    """Most recent Sunday on or before `today`."""
     today = today or datetime.date.today()
     return today - datetime.timedelta(days=(today.weekday() + 1) % 7)
 
 
 def fetch_one(artist_id, name, mbid, bucket, get_session):
-    """Runs in a worker thread. Never touches the DB — only HTTP.
-
-    Returns (artist_id, listeners, playcount, error_code):
-    error_code is None on success, 6 if Last.fm confirms the artist
-    doesn't exist, or -1 for a transient failure (network/rate-limit/
-    unexpected error) that should just be left for next week's worklist.
-    """
     session = get_session()
     try:
         if mbid:
             try:
                 data = get_with_retry(
                     {"method": "artist.getInfo", "mbid": mbid},
-                    bucket=bucket, session=session, timeout=30)
+                    bucket=bucket,
+                    session=session,
+                    timeout=30,
+                )
             except ArtistNotFoundError:
                 data = get_with_retry(
                     {"method": "artist.getInfo", "artist": name},
-                    bucket=bucket, session=session, timeout=30)
+                    bucket=bucket,
+                    session=session,
+                    timeout=30,
+                )
         else:
             data = get_with_retry(
                 {"method": "artist.getInfo", "artist": name},
-                bucket=bucket, session=session, timeout=30)
+                bucket=bucket,
+                session=session,
+                timeout=30,
+            )
         listeners = int(data["artist"]["stats"]["listeners"])
         playcount = int(data["artist"]["stats"]["playcount"])
         return artist_id, listeners, playcount, None
@@ -58,22 +60,34 @@ def fetch_one(artist_id, name, mbid, bucket, get_session):
 
 def flush_batch(cur, conn, snapshot_date, good_batch, dead_batch):
     if good_batch:
-        execute_values(cur, """
+        execute_values(
+            cur,
+            """
             INSERT INTO artist_snapshots (artist_id, listeners, playcount,
                     snapshot_date)
             VALUES %s
             ON CONFLICT (artist_id, snapshot_date) DO NOTHING
-        """, [(aid, listeners, playcount, snapshot_date)
-              for aid, listeners, playcount in good_batch])
+        """,
+            [
+                (aid, listeners, playcount, snapshot_date)
+                for aid, listeners, playcount in good_batch
+            ],
+        )
     if dead_batch:
-        execute_values(cur, """
+        execute_values(
+            cur,
+            """
             UPDATE artists SET last_error_code = 6, last_error_at = now()
             FROM (VALUES %s) AS d(id)
             WHERE artists.id = d.id
-        """, [(aid,) for aid in dead_batch])
+        """,
+            [(aid,) for aid in dead_batch],
+        )
     conn.commit()
-    log.info(f"Committed batch: {len(good_batch)} snapshots, "
-             f"{len(dead_batch)} newly-dead artists")
+    log.info(
+        f"Committed batch: {len(good_batch)} snapshots, "
+        f"{len(dead_batch)} newly-dead artists"
+    )
 
 
 def snapshot(conn, cur, snapshot_date=None, max_workers=10, limit=None):
@@ -103,7 +117,7 @@ def snapshot(conn, cur, snapshot_date=None, max_workers=10, limit=None):
     def get_session():
         if not hasattr(thread_local, "session"):
             session = requests.Session()
-            adapter = requests.adapters.HTTPAdapter(pool_maxsize=max_workers) # type:ignore
+            adapter = requests.adapters.HTTPAdapter(pool_maxsize=max_workers)  # type:ignore
             session.mount("https://", adapter)
             thread_local.session = session
         return thread_local.session
@@ -111,7 +125,9 @@ def snapshot(conn, cur, snapshot_date=None, max_workers=10, limit=None):
     good_batch, dead_batch = [], []
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         futures = {
-            pool.submit(fetch_one, artist_id, name, mbid, bucket, get_session): artist_id
+            pool.submit(
+                fetch_one, artist_id, name, mbid, bucket, get_session
+            ): artist_id
             for artist_id, name, mbid in rows
         }
         for i, future in enumerate(as_completed(futures), start=1):
@@ -140,21 +156,30 @@ if __name__ == "__main__":
         type=datetime.date.fromisoformat,
         default=None,
         help="Pin the snapshot to this YYYY-MM-DD instead of the current "
-             "week's Sunday. Use when resuming an interrupted run.",
+        "week's Sunday. Use when resuming an interrupted run.",
     )
     parser.add_argument(
-        "--max-workers", type=int, default=10,
+        "--max-workers",
+        type=int,
+        default=10,
         help="HTTP thread pool size. Only hides per-request latency — the "
-             "shared token bucket is what actually caps request rate.",
+        "shared token bucket is what actually caps request rate.",
     )
     parser.add_argument(
-        "--limit", type=int, default=None,
+        "--limit",
+        type=int,
+        default=None,
         help="Cap the worklist size, for dry runs / smoke tests.",
     )
     args = parser.parse_args()
 
     conn = get_conn()
     cur = conn.cursor()
-    snapshot(conn, cur, snapshot_date=args.date, max_workers=args.max_workers,
-              limit=args.limit)
+    snapshot(
+        conn,
+        cur,
+        snapshot_date=args.date,
+        max_workers=args.max_workers,
+        limit=args.limit,
+    )
     conn.close()
