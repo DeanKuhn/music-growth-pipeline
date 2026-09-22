@@ -1,3 +1,5 @@
+"""Seed artists by weekly charts, though this isn't a data point anymore since there's pattern to charts."""
+
 import logging
 import datetime
 import argparse
@@ -6,8 +8,7 @@ from db import get_conn, get_or_create_artist
 from lastfm import get
 
 
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 
@@ -23,13 +24,16 @@ def seed(conn, cur, start, end):
             mbid = artist.get("mbid") or None
             artist_id = get_or_create_artist(cur, name, mbid)
 
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO weekly_charts (artist_id, rank, page,
                     snapshot_date)
                 VALUES (%s, %s, %s, %s)
                 ON CONFLICT (artist_id, page, rank, snapshot_date)
                     DO NOTHING
-            """, (artist_id, rank, page, snapshot_date))
+            """,
+                (artist_id, rank, page, snapshot_date),
+            )
 
 
 if __name__ == "__main__":
@@ -43,3 +47,4 @@ if __name__ == "__main__":
     seed(conn, cur, args.start, args.end)
     conn.commit()
     conn.close()
+

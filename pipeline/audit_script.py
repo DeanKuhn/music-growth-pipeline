@@ -1,7 +1,9 @@
+"""Audit script for first last.fm use."""
+
 import os
 import datetime
-from dotenv import load_dotenv # type:ignore
-import requests # type:ignore
+from dotenv import load_dotenv  # type:ignore
+import requests  # type:ignore
 
 
 load_dotenv()
@@ -31,12 +33,11 @@ COMMON_PARAMS = {
 
 
 def get(params: dict) -> dict:
-    response = \
-        requests.get(BASE_URL, params={**COMMON_PARAMS, **params}, timeout=10)
+    response = requests.get(BASE_URL, params={**COMMON_PARAMS, **params}, timeout=10)
     response.raise_for_status()
     data = response.json()
     if "error" in data:
-        raise ValueError(f"Last.fm error {data["error"]}: {data["message"]}")
+        raise ValueError(f"Last.fm error {data['error']}: {data['message']}")
     return data
 
 
@@ -86,8 +87,10 @@ def audit_chart_get_top_artists():
 
     print(f"\n  Top {len(artists)} artists in current chart:")
     for i, a in enumerate(artists, 1):
-        print(f"    {i}. {a['name']:30s}  listeners={a.get('listeners','?'):>10}  "\
-              f"playcount={a.get('playcount','?'):>12}")
+        print(
+            f"    {i}. {a['name']:30s}  listeners={a.get('listeners', '?'):>10}  "
+            f"playcount={a.get('playcount', '?'):>12}"
+        )
 
 
 def audit_weekly_chart():
@@ -99,36 +102,40 @@ def audit_weekly_chart():
     charts = data.get("weeklychartlist", {}).get("chart", [])
     print(f"\n  Total weekly chart snapshots available for user 'rj': {len(charts)}")
 
-
     def ts(unix_str):
         return datetime.datetime.fromtimestamp(
-            int(unix_str), datetime.timezone.utc).strftime("%Y-%m-%d")
+            int(unix_str), datetime.timezone.utc
+        ).strftime("%Y-%m-%d")
 
     if charts:
         oldest = charts[0]
         newest = charts[-1]
-        print(f"  Oldest available week : {ts(oldest['from'])} "\
-              f"  ->  {ts(oldest['to'])}")
-        print(f"  Newest available week : {ts(newest['from'])} "\
-              f" ->  {ts(newest['to'])}")
+        print(
+            f"  Oldest available week : {ts(oldest['from'])}   ->  {ts(oldest['to'])}"
+        )
+        print(f"  Newest available week : {ts(newest['from'])}  ->  {ts(newest['to'])}")
 
     print("\n--- 3b: user.getWeeklyArtistChart (artists for one week) ---")
 
     if charts:
         recent = charts[-1]
-        chart_data = get({
-            "method": "user.getWeeklyArtistChart",
-            "user": "rj",
-            "from": recent["from"],
-            "to": recent["to"],
-            "limit": 5,
-        })
+        chart_data = get(
+            {
+                "method": "user.getWeeklyArtistChart",
+                "user": "rj",
+                "from": recent["from"],
+                "to": recent["to"],
+                "limit": 5,
+            }
+        )
 
         weekly_artists = chart_data.get("weeklyartistchart", {}).get("artist", [])
         print(f"\n  Top artists for week ending {ts(recent['to'])}:")
         for i, a in enumerate(weekly_artists, 1):
-            print(f"    {i}. {a.get('name', '?'):30s}  "\
-                  f"scrobbles={a.get('playcount', '?')}")
+            print(
+                f"    {i}. {a.get('name', '?'):30s}  "
+                f"scrobbles={a.get('playcount', '?')}"
+            )
 
 
 if __name__ == "__main__":
