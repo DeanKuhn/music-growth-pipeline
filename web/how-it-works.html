@@ -24,7 +24,7 @@
 
   <main class="max-w-4xl mx-auto px-6 py-12">
     <h1 class="text-3xl font-bold mb-2">How it works</h1>
-    <p class="text-gray-400 mb-12">The pipeline behind this site — how the data moves, what dbt does, and what I learned building it.</p>
+    <p class="text-gray-400 mb-12">The story behind this site. How it's built and what was learned.</p>
 
     <!-- Architecture -->
     <section class="mb-16">
@@ -104,42 +104,82 @@
 
       <div class="space-y-10">
         <div>
-          <h3 class="text-lg text-gray-200 font-medium mb-2">Neon + EC2 → single Hetzner box</h3>
-          <p class="text-gray-400"><!-- Write your section here --></p>
+          <div>
+            <h3 class="text-lg text-gray-200 font-medium mb-2">Next.js → static HTML</h3>
+            <p class="text-gray-400">
+              Originally, I had Music Growth's frontend entirely vibe-coded. Next.js was (and still is) a very popular framework at the time, so I chose that and had AI go to work. My goal was to create a fun and interactive frontend that anyone could use, not something boring like Power BI. However, issues and problems kept coming up, and the AI repeatedly had to implement more and more complex solutions that added on to one another.
+              <br><br>
+              Although the site eventually got up and worked just fine with Next.js, I had completely lost touch with the entire web directory of my codebase. I decided that I needed to simplify the frontend into something I could understand and personalize more for myself.
+              <br><br>
+              I had already used the HTML / Tailwind CSS / JS stack for my portfolio site (which fetched data from JSON files), so I figured I could do the same thing here (JSON export layer mentioned below). In the end, file count decreased 83% (53 → 9) and line count decreased 92% (9,226 → 721). The site runs smoother, looks the same, and most importantly, I understand it.
+            </p>
+          </div>
         </div>
 
         <div>
-          <h3 class="text-lg text-gray-200 font-medium mb-2">Next.js → static HTML</h3>
-          <p class="text-gray-400"><!-- Write your section here --></p>
-        </div>
-
-        <div>
-          <h3 class="text-lg text-gray-200 font-medium mb-2">The JSON export layer</h3>
-          <p class="text-gray-400"><!-- Write your section here --></p>
+          <h3 class="text-lg text-gray-200 font-medium mb-2">Neon vs. the JSON export layer</h3>
+          <p class="text-gray-400">
+            Since the site was originally dynamic, I was fetching my data from Neon, a cloud Postgres serverless database platform. Neon worked well, but had restricting free-tier limits. I decided that, since the size of the database was very small, I could just hold it in my Hetzner instance, creating a single box that hosts my site and holds the data. That still doesn't solve the static site problem, since I wouldn't be able to query any database, even the local Postgres one on my cloud instance.
+            <br><br>
+            So instead, after every weekly pipeline run, a python script generates JSON files from the local Postgres database for every request that previously required an API call. Javascript can then be used to read these JSON files from disk. This resulted in a much simpler, faster, and robust site.
+          </p>
         </div>
       </div>
     </section>
 
     <!-- Data findings -->
     <section class="mb-16">
-      <h2 class="text-xl font-semibold mb-6">What the data says</h2>
 
+      <h2 class="text-xl font-semibold mb-6">What the data says</h2>
       <div class="space-y-10">
         <div>
-          <h3 class="text-lg text-gray-200 font-medium mb-2">Listener counts are cumulative</h3>
-          <p class="text-gray-400"><!-- Write your section here --></p>
+          <h3 class="text-lg text-gray-200 font-medium mb-2">Listeners vs. scrobbles</h3>
+          <p class="text-gray-400">
+            Last.fm tracks both an artist's listeners and scrobbles. Listeners are unique users who have ever played that artist. Playcount/scrobbles are the total plays across all users for that artist. The data on this site uses listeners, not scrobbles. Last.fm's charts, however, use recent scrobble activity to rank artists.
+            <br><br>
+            So, when this site measures "growth," what it's really measuring is new users discovering an artist for the first time, not repeated engagements.
+          </p>
         </div>
 
-        <div>
-          <h3 class="text-lg text-gray-200 font-medium mb-2">Smaller artists grow faster</h3>
-          <p class="text-gray-400"><!-- Write your section here --></p>
-        </div>
+        <div class="space-y-10">
+          <div>
+            <h3 class="text-lg text-gray-200 font-medium mb-2">Listener counts are cumulative</h3>
+            <p class="text-gray-400">
+              This is the main problem that led to the creation of this site. Last.fm only displays cumulative listener stats. So the only way to monitor artist growth is to track stats over time (in this site's case, weekly).
+            </p>
+          </div>
 
-        <div>
-          <h3 class="text-lg text-gray-200 font-medium mb-2">Chart position ≠ artist size</h3>
-          <p class="text-gray-400"><!-- Write your section here --></p>
+          <div>
+            <h3 class="text-lg text-gray-200 font-medium mb-2">Which artists grow faster?</h3>
+            <p class="text-gray-400">
+              Overall, the findings indicate what could be expected. As of week 19 data, the median % growth among the smallest artist quintile (1-28k artists) at 0.63% and the largest quintile (293k-9.1M) at 2.12%. Interestingly, the smallest quintile average % growth exceeds 50% while the largest quintile rests around 3%, meaning that most small artists stagnate, a few explode, and bigger artists grow more reliably.
+              <br><br>
+              As for genres, as of week 19 data, EDM, pop, and rap have the highest median growth %.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="text-lg text-gray-200 font-medium mb-2">Chart position ≠ artist size</h3>
+            <p class="text-gray-400">
+              Last.fm has an API endpoint for their chart (chart.getTopArtists), which I originally assumed meant that it ordered by popularity. However, after reviewing data gained from chart placements, I learned that Last.fm's chart orders roughly by scrobble activity. This means that an artist with millions of listeners could rank lower, while buzzing smaller artists can rank higher.
+              <br><br>
+              After this discovery, I started grouping artists into size groups and quintiles before comparing statistics, and learned to never assume anything about data again.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="text-lg text-gray-200 font-medium mb-2">Redacted artists</h3>
+            <p class="text-gray-400">
+              Certain artists have names that contain profanities. In the interest of keeping this site pg, I use an (admittedly very basic) REGEX to filter artist names before they're even included in the database.
+              <br><br>
+              Currently, almost 100 names have been redacted. If you feel you or your band has not been included in this database due to improper redaction, please let me know.
+            </p>
+            <p class="text-sky-500 py-8">
+              If you made it to the bottom of this page, thanks for sticking around! You may want to check out my <a href="https://deanslist.dev" class="text-orange-500 hover:text-sky-500">other stuff</a>.
+            </p>
+          </div>
+
         </div>
-      </div>
     </section>
 
   </main>
