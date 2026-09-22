@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genres — music growth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+  <header class="border-b border-gray-800 px-6 py-4">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <a href="/" class="text-lg font-semibold">music growth</a>
+      <nav class="flex gap-6 text-sm text-gray-400">
+        <a href="/" class="hover:text-gray-100">Home</a>
+        <a href="/leaderboards.html" class="hover:text-gray-100">Leaderboards</a>
+        <a href="/genres.html" class="text-gray-100">Genres</a>
+        <a href="/how-it-works.html" class="hover:text-gray-100">How it works</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-12">
+    <h1 class="text-3xl font-bold mb-2">Genres</h1>
+    <p class="text-sm text-gray-400 mb-8">82 genres across all tracked artists. Click a column header to sort.</p>
+
+    <div class="flex gap-4 mb-6">
+      <span class="text-sm text-gray-400 self-center">Sort by:</span>
+      <select id="sort-select" class="bg-gray-900 border border-gray-700 text-gray-100 rounded-lg px-3 py-2 text-sm">
+        <option value="artist_count">Artist count</option>
+        <option value="avg_listeners">Avg listeners</option>
+        <option value="small_count">Small artists</option>
+        <option value="large_count">Large artists</option>
+        <option value="median_total_pct_growth">Median growth %</option>
+        <option value="avg_plays_per_listener">Plays per listener</option>
+      </select>
+    </div>
+
+    <div class="border border-gray-800 rounded-lg bg-gray-900/50 p-2">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-400 border-b border-gray-800">
+            <th class="py-2 px-3">Genre</th>
+            <th class="py-2 px-3 text-right">Artists</th>
+            <th class="py-2 px-3 text-right">Avg listeners</th>
+            <th class="py-2 px-3 text-right">Small</th>
+            <th class="py-2 px-3 text-right">Large</th>
+            <th class="py-2 px-3 text-right">Median growth %</th>
+            <th class="py-2 px-3 text-right">Plays/listener</th>
+          </tr>
+        </thead>
+        <tbody id="genres-body"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-800 px-6 py-4 mt-auto">
+    <div class="max-w-4xl mx-auto text-sm text-gray-500">
+      Data from Last.fm · Updated weekly
+    </div>
+  </footer>
+
+  <script src="genres.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How it works — music growth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+  <header class="border-b border-gray-800 px-6 py-4">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <a href="/" class="text-lg font-semibold">music growth</a>
+      <nav class="flex gap-6 text-sm text-gray-400">
+        <a href="/" class="hover:text-gray-100">Home</a>
+        <a href="/leaderboards.html" class="hover:text-gray-100">Leaderboards</a>
+        <a href="/genres.html" class="hover:text-gray-100">Genres</a>
+        <a href="/how-it-works.html" class="text-gray-100">How it works</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-12">
+    <h1 class="text-3xl font-bold mb-2">How it works</h1>
+    <p class="text-gray-400 mb-12">The pipeline behind this site — how the data moves, what dbt does, and what I learned building it.</p>
+
+    <!-- Architecture -->
+    <section class="mb-16">
+      <h2 class="text-xl font-semibold mb-4">Architecture</h2>
+      <div class="space-y-3">
+
+        <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-sm text-gray-100 text-center">
+          Last.fm API <span class="text-gray-500 text-xs ml-2">read-only, key auth</span>
+        </div>
+        <div class="text-center text-gray-500 text-xs">&darr; <span class="text-xs">Python snapshots</span></div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-sm text-gray-100 text-center">
+          Postgres <span class="text-gray-500 text-xs ml-2">self-hosted on Hetzner</span>
+        </div>
+        <div class="text-center text-gray-500 text-xs">&darr; <span class="text-xs">dbt staging + marts</span></div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-sm text-gray-100 text-center">
+          Serving layer <span class="text-gray-500 text-xs ml-2">pre-joined api views</span>
+        </div>
+        <div class="text-center text-gray-500 text-xs">&darr; <span class="text-xs">Python export to JSON</span></div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-sm text-gray-100 text-center">
+          Static site <span class="text-gray-500 text-xs ml-2">HTML · Tailwind · vanilla JS</span>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-4">A crontab runs the pipeline every Sunday at 9 AM UTC.</p>
+
+      </div>
+    </section>
+
+    <!-- dbt DAG -->
+    <section class="mb-16">
+      <h2 class="text-xl font-semibold mb-4">The dbt DAG</h2>
+      <p class="text-gray-400 mb-6">Staging views normalize raw tables. Marts do the analytical joins. The api layer is narrow, pre-joined, and pre-indexed — the app never queries marts directly.</p>
+
+      <div class="space-y-6 text-sm">
+        <div>
+          <h3 class="text-gray-300 font-medium mb-2">staging</h3>
+          <ul class="text-gray-400 space-y-1 ml-4">
+            <li><code class="text-gray-300">stg_artist_snapshots</code> — one row per artist per week</li>
+            <li><code class="text-gray-300">stg_weekly_charts</code> — chart page/rank</li>
+            <li><code class="text-gray-300">stg_genre_artists</code> — artist ↔ genre tag</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-gray-300 font-medium mb-2">intermediate</h3>
+          <ul class="text-gray-400 space-y-1 ml-4">
+            <li><code class="text-gray-300">int_artist_base</code> — profanity filter applied once, at the source</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-gray-300 font-medium mb-2">marts</h3>
+          <ul class="text-gray-400 space-y-1 ml-4">
+            <li><code class="text-gray-300">artist_growth_summary</code> — first/last listener counts, total growth</li>
+            <li><code class="text-gray-300">artist_chart_position</code> — chart page/rank stats, left-joined so uncharted artists still get a row</li>
+            <li><code class="text-gray-300">listener_growth</code> — week-over-week deltas</li>
+            <li><code class="text-gray-300">genre_stats</code> — per-genre aggregates</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-gray-300 font-medium mb-2">api (serving layer)</h3>
+          <ul class="text-gray-400 space-y-1 ml-4">
+            <li><code class="text-gray-300">api_artist_profile</code> — one pre-joined row per artist</li>
+            <li><code class="text-gray-300">api_artist_timeseries</code> — listeners indexed to 100 at first observation</li>
+            <li><code class="text-gray-300">api_cohort_weekly</code> — precomputed median/p25/p75 per cohort per week</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lessons learned -->
+    <section class="mb-16">
+      <h2 class="text-xl font-semibold mb-6">Lessons learned</h2>
+
+      <div class="space-y-10">
+        <div>
+          <h3 class="text-lg text-gray-200 font-medium mb-2">Neon + EC2 → single Hetzner box</h3>
+          <p class="text-gray-400"><!-- Write your section here --></p>
+        </div>
+
+        <div>
+          <h3 class="text-lg text-gray-200 font-medium mb-2">Next.js → static HTML</h3>
+          <p class="text-gray-400"><!-- Write your section here --></p>
+        </div>
+
+        <div>
+          <h3 class="text-lg text-gray-200 font-medium mb-2">The JSON export layer</h3>
+          <p class="text-gray-400"><!-- Write your section here --></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data findings -->
+    <section class="mb-16">
+      <h2 class="text-xl font-semibold mb-6">What the data says</h2>
+
+      <div class="space-y-10">
+        <div>
+          <h3 class="text-lg text-gray-200 font-medium mb-2">Listener counts are cumulative</h3>
+          <p class="text-gray-400"><!-- Write your section here --></p>
+        </div>
+
+        <div>
+          <h3 class="text-lg text-gray-200 font-medium mb-2">Smaller artists grow faster</h3>
+          <p class="text-gray-400"><!-- Write your section here --></p>
+        </div>
+
+        <div>
+          <h3 class="text-lg text-gray-200 font-medium mb-2">Chart position ≠ artist size</h3>
+          <p class="text-gray-400"><!-- Write your section here --></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 px-6 py-4 mt-auto">
+    <div class="max-w-4xl mx-auto text-sm text-gray-500">
+      Data from Last.fm · Updated weekly
+    </div>
+  </footer>
+
+</body>
+
+</html>
