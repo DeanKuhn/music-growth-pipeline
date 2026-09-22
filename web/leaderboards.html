@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboards — music growth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+  <header class="border-b border-gray-800 px-6 py-4">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <a href="/" class="text-lg font-semibold">music growth</a>
+      <nav class="flex gap-6 text-sm text-gray-400">
+        <a href="/" class="hover:text-gray-100">Home</a>
+        <a href="/leaderboards.html" class="text-gray-100">Leaderboards</a>
+        <a href="/genres.html" class="hover:text-gray-100">Genres</a>
+        <a href="/how-it-works.html" class="hover:text-gray-100">How it works</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-12">
+    <h1 class="text-3xl font-bold mb-2">Leaderboards</h1>
+    <p class="text-sm text-gray-400 mb-8">Requires the full 13-week tracking window (no new or untracked artists) and at least 1,000 starting listeners.</p>
+
+    <div class="flex gap-4 mb-6">
+      <select id="type-filter" class="bg-gray-900 border border-gray-700 text-gray-100 rounded-lg px-3 py-2 text-sm">
+        <option value="fastest_growing_pct">Fastest Growing %</option>
+        <option value="biggest_listener_gain">Biggest Listener Gain</option>
+        <option value="most_listeners">Most Listeners</option>
+      </select>
+      <select id="band-filter" class="bg-gray-900 border border-gray-700 text-gray-100 rounded-lg px-3 py-2 text-sm">
+        <option value="all">All sizes</option>
+        <option value="<10k">&lt;10k</option>
+        <option value="10k-50k">10k–50k</option>
+        <option value="50k-100k">50k–100k</option>
+        <option value="100k-250k">100k–250k</option>
+        <option value="250k-500k">250k–500k</option>
+        <option value="500k-1M">500k–1M</option>
+        <option value="1M+">1M+</option>
+      </select>
+    </div>
+
+    <div class="border border-gray-800 rounded-lg bg-gray-900/50 p-2">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-400 border-b border-gray-800">
+            <th class="py-2 px-3">#</th>
+            <th class="py-2 px-3">Artist</th>
+            <th class="py-2 px-3">Size band</th>
+            <th class="py-2 px-3">Genre</th>
+            <th class="py-2 px-3 text-right">Listeners</th>
+            <th class="py-2 px-3 text-right" id="metric-header">Metric</th>
+            <th class="py-2 px-3 text-right">Weeks</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-800 px-6 py-4 mt-auto">
+    <div class="max-w-4xl mx-auto text-sm text-gray-500">
+      Data from Last.fm · Updated weekly
+    </div>
+  </footer>
+
+  <script src="leaderboards.js"></script>
+</body>
+
+</html>
