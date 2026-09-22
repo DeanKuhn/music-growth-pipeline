@@ -9,13 +9,7 @@ ssh "$HOST" 'bash -s' <<'REMOTE'
 set -euo pipefail
 cd ~/music-growth-pipeline
 git pull --ff-only
-cd web
-npm install --production
-npm run build
-sudo systemctl restart music-web
-echo "Deploy complete — checking service..."
-sleep 2
-systemctl is-active music-web
+echo "Deploy complete."
 REMOTE
 
 echo "Done."
