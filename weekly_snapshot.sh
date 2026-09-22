@@ -35,18 +35,18 @@ dbt run --project-dir dbt
 # 3. Generate portfolio stats
 python3 pipeline/generate_stats.py
 
-# 4. Commit and push stats if changed
+# 4. Export JSON for static site
+python3 pipeline/export_json.py
+
+# 5. Commit and push stats if changed
 git add data/pipeline_stats.json
 if ! git diff --staged --quiet; then
-  git commit -m "chore: update pipeline stats (snapshot $SNAPSHOT_DATE)"
+  git commit -m "Weekly pipeline run"
   git pull --rebase
   git push
   echo "Stats committed and pushed."
 else
   echo "No stats changes to commit."
 fi
-
-# 5. Restart web app so it picks up fresh data
-sudo systemctl restart music-web
 
 echo "=== Weekly snapshot completed at $(date -u) ==="
