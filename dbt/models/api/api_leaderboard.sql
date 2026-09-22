@@ -1,12 +1,3 @@
--- Precomputed top-N slices for /leaderboards. Every slice is the same three
--- metrics scoped either globally or to one size_band, so the page is a single
--- indexed read instead of a sort over 22k artists per tab.
---
--- Two deliberate exclusions, both about not publishing junk: artists below
--- min_leaderboard_listeners (a 3 → 9 listener move is 200% growth and tops a
--- percentage board forever), and artists without the full window, whose
--- growth covers fewer weeks than everyone they are ranked against.
-
 {{ config(materialized='table') }}
 
 with candidates as (
