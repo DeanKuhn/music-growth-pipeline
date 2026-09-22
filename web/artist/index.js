@@ -1,4 +1,4 @@
-const DATA = "data/";
+const DATA = "/data/";
 
 async function loadJSON(file) {
 	const res = await fetch(DATA + file);
