@@ -109,7 +109,7 @@ function renderSimilar(artist) {
 		const signColor = delta >= 0 ? "text-green-400" : "text-red-400";
 		return `
 			<tr class="border-t border-gray-800">
-				<td class="py-2 px-3"><a href="artist.html?slug=${s.slug}" class="hover:text-sky-500">${s.display_name}</a></td>
+				<td class="py-2 px-3"><a href="/artist?slug=${s.slug}" class="hover:text-sky-500">${s.display_name}</a></td>
 				<td class="py-2 px-3 text-right">${formatNum(s.latest_listeners)}</td>
 				<td class="py-2 px-3 text-right">${s.total_pct_growth}%</td>
 				<td class="py-2 px-3 text-right ${signColor}">${sign}${delta}%</td>
