@@ -36,7 +36,7 @@ function onSearchInput(text) {
 function renderSearchResults(matches) {
 	const box = document.getElementById("search-results");
 	box.innerHTML = matches.slice(0, 8).map(function(a) {
-		return `<a href="artist.html?slug=${a.slug}"
+		return `<a href="/artist?slug=${a.slug}"
 		class="block px-4 py-2 hover:bg-gray-800 text-gray-100">${a.display_name}
 		<span class="text-gray-500 text-sm">&emsp;&emsp;${formatNum(a.latest_listeners)}
 		listeners</span></a>`;

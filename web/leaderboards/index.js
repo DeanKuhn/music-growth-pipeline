@@ -35,7 +35,7 @@ function renderTable() {
 		return `
 			<tr class="border-t border-gray-800 hover:bg-gray-900">
 				<td class="py-2 px-3 text-gray-500">${r.rank}</td>
-				<td class="py-2 px-3"><a href="artist.html?slug=${r.slug}" class="hover:text-sky-500">${r.display_name}</a></td>
+				<td class="py-2 px-3"><a href="/artist?slug=${r.slug}" class="hover:text-sky-500">${r.display_name}</a></td>
 				<td class="py-2 px-3">${r.size_band}</td>
 				<td class="py-2 px-3">${r.primary_genre || "—"}</td>
 				<td class="py-2 px-3 text-right">${formatNum(r.latest_listeners)}</td>
