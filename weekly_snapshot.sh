@@ -29,7 +29,8 @@ echo "Snapshot date: $SNAPSHOT_DATE"
 # 1. Snapshot artists
 python3 pipeline/snapshot_artists.py --date "$SNAPSHOT_DATE"
 
-# 2. dbt run
+# 2. dbt seed and run
+dbt seed --project-dir dbt
 dbt run --project-dir dbt
 
 # 3. Generate portfolio stats

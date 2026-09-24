@@ -14,6 +14,7 @@ with candidates as (
         total_pct_growth
     from {{ ref('api_artist_profile') }}
     where is_display_safe
+      and artist_id not in (select artist_id from {{ ref('excluded_artists') }})
       and total_pct_growth is not null
       and starting_listeners >= {{ var('min_leaderboard_listeners', 1000) }}
       and weeks_tracked = (

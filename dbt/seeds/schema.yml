@@ -1,0 +1,20 @@
+version: 2
+
+seeds:
+  - name: excluded_artists
+    description: Artists excluded from front-facing tables.
+    config:
+      column_types:
+        artist_id: integer
+        reason: text
+    columns:
+      - name: artist_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('stg_artists')
+              field: artist_id
+      - name: reason
+        tests:
+          - not_null
