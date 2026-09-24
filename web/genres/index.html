@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 
-<body class="bg-gray-950 text-gray-100 min-h-screen">
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
 
   <header class="border-b border-gray-800 px-6 py-4">
     <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
@@ -22,9 +22,9 @@
     </div>
   </header>
 
-  <main class="max-w-4xl mx-auto px-6 py-12">
+  <main class="w-full max-w-4xl mx-auto px-6 py-12">
     <h1 class="text-3xl font-bold mb-2">Genres</h1>
-    <p class="text-sm text-gray-400 mb-8">82 genres across all tracked artists. Click a column header to sort.</p>
+    <p class="text-sm text-gray-400 mb-8">82 genres across all tracked artists. Click an option from the dropdown menu to sort.</p>
 
     <div class="flex gap-4 mb-6">
       <span class="text-sm text-gray-400 self-center">Sort by:</span>
@@ -39,7 +39,7 @@
     </div>
 
     <div class="border border-gray-800 rounded-lg bg-gray-900/50 p-2 overflow-x-auto">
-      <table class="w-full text-sm whitespace-nowrap">
+      <table class="w-full text-sm">
         <thead>
           <tr class="text-left text-gray-400 border-b border-gray-800">
             <th class="py-2 px-3">Genre</th>
