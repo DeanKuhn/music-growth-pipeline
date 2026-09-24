@@ -5,15 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Genres — music growth</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 
 <body class="bg-gray-950 text-gray-100 min-h-screen">
 
   <header class="border-b border-gray-800 px-6 py-4">
-    <div class="max-w-4xl mx-auto flex items-center justify-between">
+    <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
       <a href="/" class="text-lg font-semibold">music growth</a>
-      <nav class="flex gap-6 text-sm text-gray-400">
+      <nav class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-400">
         <a href="/" class="hover:text-gray-100">Home</a>
         <a href="/leaderboards" class="hover:text-gray-100">Leaderboards</a>
         <a href="/genres" class="text-gray-100">Genres</a>
@@ -38,17 +38,17 @@
       </select>
     </div>
 
-    <div class="border border-gray-800 rounded-lg bg-gray-900/50 p-2">
-      <table class="w-full text-sm">
+    <div class="border border-gray-800 rounded-lg bg-gray-900/50 p-2 overflow-x-auto">
+      <table class="w-full text-sm whitespace-nowrap">
         <thead>
           <tr class="text-left text-gray-400 border-b border-gray-800">
             <th class="py-2 px-3">Genre</th>
-            <th class="py-2 px-3 text-right">Artists</th>
-            <th class="py-2 px-3 text-right">Avg listeners</th>
-            <th class="py-2 px-3 text-right">Small</th>
-            <th class="py-2 px-3 text-right">Large</th>
-            <th class="py-2 px-3 text-right">Median growth %</th>
-            <th class="py-2 px-3 text-right">Plays/listener</th>
+            <th class="py-2 px-3 text-right" data-key="artist_count">Artists</th>
+            <th class="py-2 px-3 text-right" data-key="avg_listeners">Avg listeners</th>
+            <th class="py-2 px-3 text-right" data-key="small_count">Small</th>
+            <th class="py-2 px-3 text-right" data-key="large_count">Large</th>
+            <th class="py-2 px-3 text-right" data-key="median_total_pct_growth">Median growth %</th>
+            <th class="py-2 px-3 text-right" data-key="avg_plays_per_listener">Plays/listener</th>
           </tr>
         </thead>
         <tbody id="genres-body"></tbody>

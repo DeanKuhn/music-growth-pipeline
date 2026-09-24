@@ -9,6 +9,11 @@ function formatNum(n) {
 	return Number(n).toLocaleString();
 }
 
+// "2026-05-10" -> "May 10". T00:00 keeps it local time so the day doesn't shift.
+function shortDate(iso) {
+	return new Date(iso + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 function getSlug() {
 	const params = new URLSearchParams(window.location.search);
 	return params.get("slug");
@@ -20,7 +25,7 @@ function renderHeader(artist) {
 		? `<span class="text-sm text-gray-400 ml-3">#${artist.global_rank} on charts</span>`
 		: "";
 	el.innerHTML = `
-		<h1 class="text-3xl font-bold">${artist.display_name}${rank}</h1>
+		<h1 class="text-3xl font-bold break-words">${artist.display_name}${rank}</h1>
 		<div class="mt-2 flex gap-3 text-sm">
 			<span class="bg-gray-800 rounded px-2 py-1">${artist.size_band}</span>
 			${artist.primary_genre ? `<span class="bg-gray-800 rounded px-2 py-1">${artist.primary_genre}</span>` : ""}
@@ -77,6 +82,7 @@ function renderChart(artist) {
 		},
 		options: {
 			responsive: true,
+			maintainAspectRatio: false,
 			plugins: {
 				legend: { display: false }
 			},
@@ -89,7 +95,13 @@ function renderChart(artist) {
 					grid: { color: "rgba(255,255,255,0.06)" }
 				},
 				x: {
-					ticks: { color: "#9ca3af" },
+					ticks: {
+						color: "#9ca3af",
+						maxRotation: 0,
+						maxTicksLimit: 6,
+						autoSkipPadding: 16,
+						callback: function(v) { return shortDate(this.getLabelForValue(v)); }
+					},
 					grid: { color: "rgba(255,255,255,0.06)" }
 				}
 			}
@@ -110,8 +122,8 @@ function renderSimilar(artist) {
 		return `
 			<tr class="border-t border-gray-800">
 				<td class="py-2 px-3"><a href="/artist?slug=${s.slug}" class="hover:text-sky-500">${s.display_name}</a></td>
-				<td class="py-2 px-3 text-right">${formatNum(s.latest_listeners)}</td>
-				<td class="py-2 px-3 text-right">${s.total_pct_growth}%</td>
+				<td class="py-2 px-3 text-right hidden sm:table-cell">${formatNum(s.latest_listeners)}</td>
+				<td class="py-2 px-3 text-right hidden sm:table-cell">${s.total_pct_growth}%</td>
 				<td class="py-2 px-3 text-right ${signColor}">${sign}${delta}%</td>
 			</tr>
 		`;
@@ -119,17 +131,19 @@ function renderSimilar(artist) {
 
 	section.innerHTML = `
 		<h2 class="text-xl font-semibold mb-4">Similar artists</h2>
-		<table class="w-full text-sm">
+		<div class="overflow-x-auto">
+		<table class="w-full text-sm whitespace-nowrap">
 			<thead>
 				<tr class="text-left text-gray-400">
 					<th class="py-2 px-3">Artist</th>
-					<th class="py-2 px-3 text-right">Listeners</th>
-					<th class="py-2 px-3 text-right">Total growth</th>
+					<th class="py-2 px-3 text-right hidden sm:table-cell">Listeners</th>
+					<th class="py-2 px-3 text-right hidden sm:table-cell">Total growth</th>
 					<th class="py-2 px-3 text-right">vs. ${artist.display_name}</th>
 				</tr>
 			</thead>
 			<tbody>${rows}</tbody>
 		</table>
+		</div>
 	`;
 }
 
