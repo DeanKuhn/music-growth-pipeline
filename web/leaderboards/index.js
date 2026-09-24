@@ -36,11 +36,11 @@ function renderTable() {
 			<tr class="border-t border-gray-800 hover:bg-gray-900">
 				<td class="py-2 px-3 text-gray-500">${r.rank}</td>
 				<td class="py-2 px-3"><a href="/artist?slug=${r.slug}" class="hover:text-sky-500">${r.display_name}</a></td>
-				<td class="py-2 px-3 hidden sm:table-cell">${r.size_band}</td>
+				<td class="py-2 px-3 whitespace-nowrap hidden sm:table-cell">${r.size_band}</td>
 				<td class="py-2 px-3 hidden sm:table-cell">${r.primary_genre || "—"}</td>
-				<td class="py-2 px-3 text-right hidden sm:table-cell">${formatNum(r.latest_listeners)}</td>
-				<td class="py-2 px-3 text-right">${metric}</td>
-				<td class="py-2 px-3 text-right hidden sm:table-cell">${r.weeks_tracked}</td>
+				<td class="py-2 px-3 text-right whitespace-nowrap hidden sm:table-cell">${formatNum(r.latest_listeners)}</td>
+				<td class="py-2 px-3 text-right whitespace-nowrap">${metric}</td>
+				<td class="py-2 px-3 text-right whitespace-nowrap hidden sm:table-cell">${r.weeks_tracked}</td>
 			</tr>
 		`;
 	}).join("");
