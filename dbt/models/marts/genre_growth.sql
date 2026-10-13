@@ -1,6 +1,6 @@
 with growth as (
 
-    select * from {{ ref('artist_growth_summary') }}
+    select * from {{ ref('artist_growth_panel') }}
 
 ),
 
@@ -30,10 +30,6 @@ final as (
             percentile_cont(0.5) within group
             (order by gr.total_pct_growth)::numeric, 2
         ) as median_total_pct_growth,
-
-        round(
-            avg(gr.average_listener_pct)::numeric, 2
-        ) as avg_weekly_pct_change,
 
         round(
             avg(gr.ending_count)::numeric, 2
