@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: int_artist_base
+    description: >
+      One row per artist with at least one snapshot. Single source of truth for
+      display names, slugs, and size bands. Profanity filtering happens here so
+      no downstream model can leak an unsafe name.
+    columns:
+      - name: artist_id
+        description: Primary key.
+      - name: artist_name
+        description: Raw Last.fm name. Never display directly.
+      - name: display_name
+        description: Name safe for public display; redacted if it fails the profanity filter.
+      - name: mbid
+        description: MusicBrainz ID. Nullable.
+      - name: name_norm
+        description: Lowercased, unaccented, trimmed name for search.
+      - name: slug
+        description: URL slug, "<id>-<name>". Unsafe names become "<id>-redacted".
+      - name: first_snapshot_date
+        description: Earliest snapshot date.
+      - name: latest_snapshot_date
+        description: Most recent snapshot date.
+      - name: weeks_tracked
+        description: Distinct snapshot dates.
+      - name: starting_listeners
+        description: Listeners at first snapshot.
+      - name: latest_listeners
+        description: Listeners at latest snapshot.
+      - name: latest_playcount
+        description: Scrobbles at latest snapshot.
+      - name: size_band
+        description: Bucket on starting_listeners, "<10k" through "1M+".
+      - name: size_band_sort
+        description: Sort key for size_band, 1 (smallest) to 7.
+      - name: is_display_safe
+        description: False if the name matches the profanity pattern.
+      - name: listener_percentile
+        description: Percentile rank of latest_listeners across all artists, 0-1.
