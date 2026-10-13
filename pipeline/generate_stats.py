@@ -69,6 +69,8 @@ stats["growth_by_size_quintile"] = [
         "avg_pct_growth": float(row[4]),
         "median_pct_growth": float(row[5]),
         "p90_pct_growth": float(row[6]),
+        "window_start": (row[7]),
+        "window_end": (row[8]),
     }
     for row in rows
 ]
@@ -76,16 +78,14 @@ stats["growth_by_size_quintile"] = [
 # --- TOP 10 FASTEST GROWING ARTISTS ---
 cur.execute("""
     select
-        artist_name,
-        starting_count,
-        ending_count,
-        total_pct_growth
-    from artist_growth_summary
-    where size_band_sort <= 4
-        and weeks_tracked >= 6
-        and starting_count > 5000
-    order by total_pct_growth desc
-    limit 10
+        b.artist_name,
+        p.start_listeners,
+        p.end_listeners,
+        p.pct_growth
+    from artist_growth_panel p
+    join int_artist_base b using (artist_id)
+    where b.size_band_sort <= 4 and p.start_listeners > 5000
+    order by p.pct_growth desc limit 10
 """)
 rows = cur.fetchall()
 stats["top_growing_artists"] = [
@@ -101,14 +101,12 @@ stats["top_growing_artists"] = [
 # --- GENRE GROWTH ---
 cur.execute("""
     select
-        b.artist_name,
-        p.start_listeners,
-        p.end_listeners,
-        p.pct_growth
-    from artist_growth_panel p
-    join int_artist_base b using (artist_id)
-    where b.size_band_sort <= 4 and p.start_listeners > 5000
-    order by p.pct_growth desc limit 10
+        genre,
+        artist_count,
+        median_total_pct_growth
+    from genre_growth
+    order by median_total_pct_growth desc
+    limit 5
 """)
 rows = cur.fetchall()
 stats["genre_growth"] = [

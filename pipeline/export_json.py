@@ -69,7 +69,7 @@ def export_all(cur):
         combined = {
             **profile,
             "timeseries": ts_by_artist.get(profile["artist_id"], []),
-            "similar": sim_by_artist.get(profile["artist_id"], [])
+            "similar": sim_by_artist.get(profile["artist_id"], []),
         }
         write_json(f"artists/{combined['slug']}.json", combined)
     print(f"  artists: {len(profiles)} .json files")
@@ -98,7 +98,7 @@ def export_all(cur):
     cur.execute("""
         select genre, artist_count, avg_listeners, avg_plays_per_listener,
                small_count, large_count, avg_total_pct_growth,
-               median_total_pct_growth, growth_avg_weekly_pct_change
+               median_total_pct_growth
         from api_genres
         order by artist_count desc
     """)
