@@ -1,13 +1,3 @@
--- The comparison line on an artist page: for each cohort and week, the median
--- and quartiles of listeners_indexed (every artist rebased to 100 at their
--- first week, so a 40k-listener indie band and a 3M-listener act are on the
--- same scale). Precomputing it turns /compare into a join of two ~13-row
--- slices instead of a median over thousands of artists per request.
---
--- Cohorts are size_band, never tier: "unranked" means "never seen on the
--- chart", and it spans 1 → 5.5M listeners, so it is an observation gap rather
--- than a peer of indie/mainstream. See findings.md issue #2.
-
 {{ config(materialized='table') }}
 
 with base as (
@@ -17,9 +7,6 @@ with base as (
 ),
 
 -- Fixed panel: only artists whose series starts on the first week of the
--- window. A late-seeded artist enters at listeners_indexed = 100 in whatever
--- week it was seeded, which would drag that week's median down — a
--- composition change masquerading as a growth slowdown. Costs ~470 of 22,200.
 panel as (
 
     select artist_id

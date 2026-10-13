@@ -1,9 +1,3 @@
--- Single row of "is this thing alive and how big is it" for GET /api/stats and
--- the how-it-works page. Freshness is measured against the snapshot date, not
--- the dbt run: the weekly Actions job could rebuild these models perfectly
--- while the ingestion step failed, and that is exactly the failure worth
--- surfacing.
-
 {{ config(materialized='table') }}
 
 with snapshots as (

@@ -1,13 +1,3 @@
--- Narrow serving table for GET /api/genres. Exists so that route can read
--- the api/ layer like every other endpoint instead of reaching into
--- genre_stats/genre_growth directly, which would break the "API never
--- queries the marts" rule (see CLAUDE.md's dbt/models/api/ entry).
---
--- genre_stats and genre_growth disagree on population: genre_stats covers
--- every genre with >=1 artist; genre_growth requires weeks_tracked >= 6 and
--- drops genres under 50 qualifying artists. The left join means small/new
--- genres appear with growth columns null rather than vanishing outright.
-
 {{ config(materialized='table') }}
 
 with stats as (

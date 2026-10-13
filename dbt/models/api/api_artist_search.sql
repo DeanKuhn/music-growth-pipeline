@@ -1,9 +1,3 @@
--- One narrow row per artist, built to be typed against: the autocomplete
--- endpoint matches on name_norm (trigram for typos, prefix for <3-char
--- queries) and orders by latest_listeners. Only artists that have a profile
--- page appear here, so a search hit can never 404. Names failing the
--- profanity filter are excluded outright — see macros/profanity.sql.
-
 {{ config(materialized='table') }}
 
 with base as (

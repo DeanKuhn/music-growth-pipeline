@@ -1,13 +1,3 @@
--- The "similar artists" table on an artist page: each neighbour with its own
--- growth, so the page answers "did the acts like this one also grow?" without
--- a second round trip.
---
--- Edges are stored one-directionally — seed_similar_artists.py only queries
--- charted artists, so 7,766 artists exist solely as the *target* of an edge
--- and would show an empty table (findings.md issue #5). Last.fm similarity is
--- symmetric in meaning, so both directions are unioned here and the pair is
--- deduped on the higher score.
-
 {{ config(materialized='table') }}
 
 with edges as (
