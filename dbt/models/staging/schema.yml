@@ -3,6 +3,7 @@ version: 2
 sources:
   - name: public
     schema: public
+    description: Raw tables written by the Python ingestion scripts. Read-only to dbt.
     tables:
       - name: artists
         description: "Raw artist records seeded from Last.fm charts and genre/similarity scripts."
@@ -22,24 +23,33 @@ sources:
             description: "Timestamp when the artist was inserted."
             tests:
               - not_null
+          - name: last_error_code
+            description: Last.fm error code from the most recent failed fetch. Null if none.
+          - name: last_error_at
+            description: When last_error_code was recorded.
 
       - name: artist_snapshots
         description: "Weekly listener and playcount snapshots fetched via artist.getInfo."
         columns:
           - name: id
+            description: Primary key.
             tests:
               - unique
               - not_null
           - name: artist_id
+            description: FK to artists.
             tests:
               - not_null
           - name: listeners
+            description: Cumulative all-time unique listeners.
             tests:
               - not_null
           - name: playcount
+            description: Cumulative all-time scrobbles.
             tests:
               - not_null
           - name: snapshot_date
+            description: Week anchor (Sunday) of the snapshot run.
             tests:
               - not_null
 
@@ -47,19 +57,24 @@ sources:
         description: "Chart appearance records from chart.getTopArtists."
         columns:
           - name: id
+            description: Primary key.
             tests:
               - unique
               - not_null
           - name: artist_id
+            description: FK to artists.
             tests:
               - not_null
           - name: rank
+            description: Position within the page (1-5).
             tests:
               - not_null
           - name: page
+            description: Chart page (1-2000). Deeper pages = smaller artists.
             tests:
               - not_null
           - name: snapshot_date
+            description: Date the chart was scraped.
             tests:
               - not_null
 
@@ -67,41 +82,183 @@ sources:
         description: "Similar artist relationships fetched via artist.getSimilar."
         columns:
           - name: id
+            description: Primary key.
             tests:
               - unique
               - not_null
           - name: artist_id
+            description: FK to artists. The artist that was queried.
             tests:
               - not_null
+          - name: similar_artist_id
+            description: FK to artists. Null when the similar artist isn't in the database.
           - name: similar_name
+            description: Similar artist's name as returned by Last.fm.
             tests:
               - not_null
+          - name: similar_mbid
+            description: Similar artist's MusicBrainz ID. Nullable.
           - name: similarity_score
+            description: Last.fm match score, 0-1.
             tests:
               - not_null
+          - name: fetched_at
+            description: Date the relationship was fetched.
 
       - name: genres
         description: "Genre/tag list seeded from Last.fm tag.getTopArtists."
         columns:
           - name: id
+            description: Primary key.
             tests:
               - unique
               - not_null
           - name: genre
+            description: Genre tag name.
             tests:
               - unique
               - not_null
+          - name: fetched_at
+            description: Date the genre was seeded.
 
       - name: genre_artists
         description: "Artist-to-genre associations with rank within each genre."
         columns:
           - name: id
+            description: Primary key.
             tests:
               - unique
               - not_null
           - name: genre_id
+            description: FK to genres.
             tests:
               - not_null
           - name: artist_id
+            description: FK to artists.
             tests:
               - not_null
+          - name: rank_in_genre
+            description: Artist's position in the genre's top-artists list.
+          - name: fetched_at
+            description: Date the association was fetched.
+
+      - name: countries
+        description: Country list. Not yet used by any model.
+        columns:
+          - name: id
+            description: Primary key.
+          - name: country
+            description: Country name.
+          - name: fetched_at
+            description: Date the country was seeded.
+
+      - name: country_artists
+        description: Artist-to-country associations. Not yet used by any model.
+        columns:
+          - name: id
+            description: Primary key.
+          - name: country_id
+            description: FK to countries.
+          - name: artist_id
+            description: FK to artists.
+          - name: rank_in_country
+            description: Artist's position in the country chart.
+          - name: fetched_at
+            description: Date the association was fetched.
+
+      - name: tags
+        description: Per-artist tags with weight. Empty — reserved for future use.
+        columns:
+          - name: id
+            description: Primary key.
+          - name: artist_id
+            description: FK to artists.
+          - name: tag
+            description: Tag name.
+          - name: tag_count
+            description: Tag weight from Last.fm.
+
+models:
+  - name: stg_artists
+    description: One row per artist. Renames id → artist_id and name → artist_name.
+    columns:
+      - name: artist_id
+        description: Primary key.
+      - name: artist_name
+        description: Raw Last.fm name. Use int_artist_base.display_name for display.
+      - name: mbid
+        description: MusicBrainz ID. Nullable.
+      - name: created_at
+        description: When the artist was inserted.
+
+  - name: stg_artist_snapshots
+    description: One row per artist per snapshot date.
+    columns:
+      - name: snapshot_id
+        description: Primary key.
+      - name: artist_id
+        description: FK to stg_artists.
+      - name: listeners
+        description: Cumulative all-time unique listeners.
+      - name: playcount
+        description: Cumulative all-time scrobbles.
+      - name: snapshot_date
+        description: >
+          Week anchor (Sunday). The first two dates are not true weekly runs —
+          see docs/structure.md before aggregating.
+
+  - name: stg_weekly_charts
+    description: One row per chart appearance. An artist can appear on more than one page.
+    columns:
+      - name: chart_id
+        description: Primary key.
+      - name: artist_id
+        description: FK to stg_artists.
+      - name: rank
+        description: Position within the page (1-5).
+      - name: page
+        description: Chart page (1-2000).
+      - name: snapshot_date
+        description: Date the chart was scraped.
+
+  - name: stg_artist_similarities
+    description: One row per (artist, similar artist) pair. One-directional.
+    columns:
+      - name: similarity_id
+        description: Primary key.
+      - name: artist_id
+        description: FK to stg_artists. The artist that was queried.
+      - name: similar_artist_id
+        description: FK to stg_artists. Null when the similar artist isn't in the database.
+      - name: similar_name
+        description: Similar artist's name as returned by Last.fm.
+      - name: similar_mbid
+        description: Similar artist's MusicBrainz ID. Nullable.
+      - name: similarity_score
+        description: Last.fm match score, 0-1.
+      - name: fetched_at
+        description: Date the pair was fetched.
+
+  - name: stg_genres
+    description: One row per genre tag.
+    columns:
+      - name: genre_id
+        description: Primary key.
+      - name: genre
+        description: Genre tag name.
+      - name: fetched_at
+        description: Date the genre was seeded.
+
+  - name: stg_genre_artists
+    description: One row per (genre, artist) pair.
+    columns:
+      - name: genre_artist_id
+        description: Primary key.
+      - name: genre_id
+        description: FK to stg_genres.
+      - name: artist_id
+        description: FK to stg_artists.
+      - name: rank_in_genre
+        description: Artist's position in the genre's top-artists list.
+      - name: fetched_at
+        description: Date the pair was fetched.
