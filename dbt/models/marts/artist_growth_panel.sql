@@ -26,8 +26,8 @@ per_artist as (
 
   select
     artist_id,
-    array_agg(listeners order by snapshot_date asc)[1] as start_listeners,
-    array_agg(listeners order by snapshot_date desc)[1] as end_listeners,
+    (array_agg(listeners order by snapshot_date asc))[1] as start_listeners,
+    (array_agg(listeners order by snapshot_date desc))[1] as end_listeners,
     count(distinct snapshot_date) as weeks_present
 
   from windowed
