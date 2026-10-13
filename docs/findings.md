@@ -10,7 +10,7 @@ Detail behind the summaries in CLAUDE.md. Not loaded into agent context by defau
 
 ## Longitudinal Findings
 - ⚠ **Retracted:** "growth increases with chart page depth" (underground 2.20% vs mainstream 1.55%, 2026-05-10 to 2026-06-14). Does not survive the full-tier fix — see Issue #1. Do not restate in portfolio copy.
-- **Replacement finding — published in README 2026-08-03. Use this.** Median total growth falls monotonically with artist size, by **starting**-listener quintile: 2.67% / 2.46% / 2.10% / 1.76% / 1.71% (smallest → largest, 4,441/4,440 artists each). Window 2026-05-10 → 2026-08-02, 13 snapshots, 22,201 artists (the 6 short of 22,207 have no snapshot in-window or a zero starting count). Avg growth 7.61% / 4.32% / 3.07% / 2.47% / 2.07%; P90 16.88% / 10.24% / 6.53% / 5.03% / 3.96%. No gaps or reversals.
+- **Replacement finding — published in README 2026-08-03.** Still holds for this 21.7k panel; for current numbers see Issue #9. Median total growth falls monotonically with artist size, by **starting**-listener quintile: 2.67% / 2.46% / 2.10% / 1.76% / 1.71% (smallest → largest, 4,441/4,440 artists each). Window 2026-05-10 → 2026-08-02, 13 snapshots, 22,201 artists (the 6 short of 22,207 have no snapshot in-window or a zero starting count). Avg growth 7.61% / 4.32% / 3.07% / 2.47% / 2.07%; P90 16.88% / 10.24% / 6.53% / 5.03% / 3.96%. No gaps or reversals.
   - Quintiles cut on **starting** listeners, not latest — cutting on latest lets fast growers migrate upward and flattens the gradient (it yields 2.52 / 2.45 / 2.13 / 1.79 / 1.74).
   - ⚠ These supersede the figures first recorded here (2.60 / 2.51 / 2.16 / 1.81 / 1.79). Neither the starting- nor latest-listener cut reproduces those exactly, and the original query was not saved, so its population or window differed slightly. The direction, monotonicity, and magnitude are unaffected. Query is saved at `dbt/analyses/growth_by_listener_quintile.sql` — rerun it before republishing these numbers.
 - P90 growth for underground artists (9.16%) is 3x higher than mainstream (2.75%) — a fat tail of fast-movers
@@ -49,6 +49,23 @@ Detail behind the summaries in CLAUDE.md. Not loaded into agent context by defau
    **Why it matters beyond display:** the duplicate grew +1.24% the week ending 2026-09-13 against +0.27% for the real page — a small, split-off page reads as a growth signal it isn't.
 
    **Decision:** exclude via a dbt seed (`excluded_artists`: artist_id, reason) filtered in `api_leaderboard`; raw data untouched. No reverse-decoding repair. `weekly_snapshot.sh` now runs `dbt seed` before `dbt run`. Verified: `dbt build --select excluded_artists api_leaderboard` passes and 2552 no longer appears in `api_leaderboard`.
+9. **README/site corrected (2026-10-13); `generate_stats.py` still open.** The README and How it works page said median growth *rises* with size (0.63% → 2.12%). That was an unequal-window artefact. ~15.7k artists joined on 2026-08-02/08-09, so they have 10–11 snapshots against 23 for the original 21.7k. The quintile query (`generate_stats.py`, from 2026-05-10, `having count >= 6`) compares total growth over whatever window each artist has. Small artists are mostly late joiners, so they're measured over roughly half the time.
+
+   Example (re-run 2026-10-13, latest snapshot 2026-10-11):
+
+   | Window | Q1 | Q2 | Q3 | Q4 | Q5 |
+   |---|---|---|---|---|---|
+   | From 05-10, ≥6 weeks (the flawed method) | 0.94 | 1.01 | 1.43 | 2.19 | 2.33 |
+   | ↳ late joiners in quintile | 82% | 62% | 41% | 19% | 6% |
+   | ↳ avg weeks measured | 12.4 | 14.9 | 17.7 | 20.5 | 22.2 |
+   | Fixed panel, all 23 weeks from 05-10 (n=21,717) | 3.99 | 3.44 | 2.94 | 2.52 | 2.45 |
+   | Everyone, all 10 weeks from 08-09 (n=37,430) | 0.77 | 0.66 | 0.61 | 0.59 | 0.59 |
+
+   Both equal-window cuts fall monotonically, matching the 2026-08-03 finding. Per-date counts: 21,728–21,732 artists for 05-10 → 07-26, 22,206 on 08-02, 37,431–37,435 from 08-09.
+
+   **Rule:** any cross-artist growth comparison must use one shared window and require every artist to have every week in it. A minimum-weeks filter is not enough.
+
+   **Still open:** `pipeline/generate_stats.py` uses the flawed method, so `data/pipeline_stats.json` and deanslist.dev still publish the confounded numbers. The page chart should read from an equal-window model, not that query.
 
 ## Completed Build Log
 Stages A1-A6 of the web app (2026-07-31 → 2026-08-03): pg_trgm/unaccent extensions + 4 indexes, `tags` DDL reconciled; deduped 3,045 artist rows and extracted shared `pipeline/db.py`/`pipeline/lastfm.py`; `artist_tiers` left join and chart pages 51-499 backfilled; marts materialized as tables with `int_artist_base` built; `app_readonly` role created and verified. A4 (genre backfill via `artist.getTopTags`) was deferred to Stage B.
