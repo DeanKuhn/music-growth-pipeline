@@ -22,10 +22,8 @@ final as (
         s.avg_plays_per_listener,
         s.small_count,
         s.large_count,
-
         g.avg_total_pct_growth,
-        g.median_total_pct_growth,
-        g.avg_weekly_pct_change as growth_avg_weekly_pct_change
+        g.median_total_pct_growth
 
     from stats s
     left join growth g on s.genre = g.genre
