@@ -23,22 +23,21 @@ final as (
         count(ga.artist_id) as artist_count,
 
         round(
-            avg(gr.total_pct_growth)::numeric, 2
+            avg(gr.pct_growth)::numeric, 2
         ) as avg_total_pct_growth,
 
         round(
             percentile_cont(0.5) within group
-            (order by gr.total_pct_growth)::numeric, 2
+            (order by gr.pct_growth)::numeric, 2
         ) as median_total_pct_growth,
 
         round(
-            avg(gr.ending_count)::numeric, 2
+            avg(gr.end_listeners)::numeric, 2
         ) as avg_listeners
 
     from growth gr
     join genre_artists ga on gr.artist_id = ga.artist_id
     join genres ge on ga.genre_id = ge.genre_id
-    where gr.weeks_tracked >= 6
     group by genre
     having count(*) >= 50
 

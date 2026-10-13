@@ -139,21 +139,19 @@ models:
 
   - name: genre_growth
     description: >
-      One row per genre. Growth aggregates from artist_growth_summary; only
-      artists with 6+ weeks, only genres with 50+ artists.
+      One row per genre. Equal-window growth aggregates from
+      artist_growth_panel; only genres with 50+ panel artists.
     columns:
       - name: genre
         description: Primary key.
       - name: artist_count
-        description: Qualifying artists in the genre.
+        description: Panel artists in the genre.
       - name: avg_total_pct_growth
-        description: Mean total_pct_growth.
+        description: Mean pct_growth.
       - name: median_total_pct_growth
-        description: Median total_pct_growth.
-      - name: avg_weekly_pct_change
-        description: Mean of average_listener_pct.
+        description: Median pct_growth.
       - name: avg_listeners
-        description: Mean ending_count.
+        description: Mean end_listeners.
 
   - name: weekly_growth_by_size_band
     description: One row per size band per week. Summed listeners and week-over-week change.
