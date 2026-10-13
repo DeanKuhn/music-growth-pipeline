@@ -4,10 +4,11 @@ Tracks fastest growing artists and genres."""
 
 import json
 import os
-import psycopg2
-from datetime import date
-from dotenv import load_dotenv
 import re
+from datetime import date
+
+import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -15,8 +16,6 @@ _pattern_str = os.getenv("PROFANITY_PATTERN", "")
 PROFANITY_PATTERN = (
     re.compile(r"(" + _pattern_str + r")", re.IGNORECASE) if _pattern_str else None
 )
-
-SERIES_START_DATE = "2026-05-10"
 
 
 def sanitize_name(name):
@@ -45,57 +44,20 @@ stats["summary"]["latest_snapshot"] = row[0]
 
 # --- GROWTH BY SIZE QUINTILE ---
 query = """
-    with bounded as (
-        select artist_id, listeners, snapshot_date
-        from stg_artist_snapshots
-        where snapshot_date >= %s
-    ),
-
-    agg as (
-        select
-            artist_id,
-            (array_agg(listeners order by snapshot_date asc ))[1]
-                as starting_listeners,
-            (array_agg(listeners order by snapshot_date desc))[1]
-                as latest_listeners
-        from bounded
-        group by artist_id
-        having count(distinct snapshot_date) >= 6
-    ),
-
-    growth as (
-        select
-            starting_listeners,
-            100.0 * (latest_listeners - starting_listeners) / starting_listeners
-                as total_pct_growth,
-            ntile(5) over (order by starting_listeners) as listener_quintile
-        from agg
-        where starting_listeners > 0
-    )
-
     select
-        listener_quintile,
-        count(*) as artists,
-        min(starting_listeners) as band_min,
-        max(starting_listeners) as band_max,
-
-        round(avg(total_pct_growth), 2) as avg_pct_growth,
-
-        round(
-            percentile_cont(0.5)
-                within group (order by total_pct_growth)::numeric, 2
-        ) as median_pct_growth,
-
-        round(
-            percentile_cont(0.9)
-                within group (order by total_pct_growth)::numeric, 2
-        ) as p90_pct_growth
-
-    from growth
-    group by listener_quintile
-    order by listener_quintile
+        size_quintile,
+        artist_count,
+        band_min,
+        band_max,
+        avg_pct_growth,
+        median_pct_growth,
+        p90_pct_growth,
+        window_start,
+        window_end
+    from api_growth_by_quintile
+    order by size_quintile
 """
-cur.execute(query, (SERIES_START_DATE,))
+cur.execute(query)
 
 rows = cur.fetchall()
 stats["growth_by_size_quintile"] = [
@@ -139,12 +101,14 @@ stats["top_growing_artists"] = [
 # --- GENRE GROWTH ---
 cur.execute("""
     select
-        genre,
-        artist_count,
-        median_total_pct_growth
-    from genre_growth
-    order by median_total_pct_growth desc
-    limit 5
+        b.artist_name,
+        p.start_listeners,
+        p.end_listeners,
+        p.pct_growth
+    from artist_growth_panel p
+    join int_artist_base b using (artist_id)
+    where b.size_band_sort <= 4 and p.start_listeners > 5000
+    order by p.pct_growth desc limit 10
 """)
 rows = cur.fetchall()
 stats["genre_growth"] = [
