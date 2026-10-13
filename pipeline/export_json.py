@@ -130,6 +130,16 @@ def export_all(cur):
     write_json("health.json", row)
     print("  health: exported")
 
+    cur.execute("""
+        select size_quintile, artist_count, band_min, band_max,
+            median_pct_growth, avg_pct_growth, p90_pct_growth,
+            window_start, window_end, n_weeks
+        from api_growth_by_quintile order by size_quintile
+    """)
+    rows = cur.fetchall()
+    write_json("growth_by_quintile.json", rows)
+    print(f"  growth_by_quintile: {len(rows)} rows")
+
 
 def main():
     conn = get_conn()
