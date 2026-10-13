@@ -48,24 +48,25 @@ When Dean asks for implementation help:
 Python ingestion → Postgres (self-hosted on Hetzner) → dbt (dbt-postgres) → SQL
 analyses. Source: Last.fm API (key auth, read-only). Automation: cron job on
 server (`weekly_snapshot.sh`). Power BI report on a live Postgres connection.
-Web app: Next.js on same Hetzner instance behind Caddy reverse proxy,
-systemd-managed.
+Web app: static HTML + Tailwind (standalone CLI, v4) + vanilla JS, served by
+Caddy on the same Hetzner instance. Data is JSON exported from the dbt `api_*`
+models by `pipeline/export_json.py`. Old Next.js app lives on the `legacy` branch.
 
 ## Environment
 
 - Python runs in `.venv`, not system Python
 - `.env` holds `DATABASE_URL` (local Postgres) and `LASTFM_API_KEY`
-- Node/npm for `web/` via `~/.nvm`
+- Rebuild CSS from `web/`: `tailwindcss -i input.css -o styles.css --minify`
 
 ## Repo layout
 
 ```
-pipeline/  Python ingestion (shared db.py/lastfm.py, seeds, snapshot, stats)
+pipeline/  Python ingestion (shared db.py/lastfm.py, seeds, snapshot, stats, JSON export)
 dbt/       dbt project (models/, analyses/, tests/, seeds/, macros/, snapshots/)
 sql/       schema.sql + migrations/
 docs/      findings.md, webapp-implementation-plan.md
 data/      pipeline_stats.json (deanslist.dev fetches this path)
-web/       Next.js app (App Router, TS, all routes built)
+web/       Static site (index, artist/, genres/, leaderboards/, how-it-works/; data/ gitignored)
 ```
 
 - Run Python from repo root: `python pipeline/snapshot_artists.py`
