@@ -12,15 +12,15 @@ A data pipeline + dbt project + public web app built on Last.fm data, tracking l
 
 ## The Finding
 
-Across 37,435 artists tracked in weekly snapshots from 2026-05-10, **median listener growth increases with starting audience size** while the **smallest artists carry the largest average growth**, driven by a fat right tail:
+Across 37,430 artists measured over the same 10-week window (2026-08-09 → 2026-10-11), **median listener growth falls as starting audience size rises**, and the **smallest artists have the fattest right tail**:
 
-| Quintile (smallest → largest) | Q1 | Q2 | Q3 | Q4 | Q5 |
+| Starting-listener quintile (smallest → largest) | Q1 | Q2 | Q3 | Q4 | Q5 |
 |---|---|---|---|---|---|
-| Median growth | 0.63% | 0.72% | 1.20% | 1.99% | **2.12%** |
-| Average growth | **58.36%** | 3.70% | 3.44% | 3.13% | 2.78% |
-| P90 growth | 4.71% | 8.80% | **9.33%** | 7.19% | 5.39% |
+| Median growth | **0.77%** | 0.66% | 0.61% | 0.59% | 0.59% |
+| Average growth | **1.59%** | 1.26% | 1.11% | 0.93% | 0.80% |
+| P90 growth | **3.36%** | 2.91% | 2.57% | 2.02% | 1.60% |
 
-Most small artists barely move, but the ones that break out grow explosively. Q1's average is 27× its median. Explore the full breakdown by artist, genre, and size band on the [live site](https://music.deanslist.dev).
+The 21,717 artists tracked since 2026-05-10 (23 weeks) show the same pattern, more strongly: median 3.99% → 2.45%, P90 24.56% → 5.62%. Every artist is compared over an identical window — an earlier version of this table mixed 10- and 23-week histories and reported the opposite (see Issue #9 in `docs/findings.md`). Explore the full breakdown by artist, genre, and size band on the [live site](https://music.deanslist.dev).
 
 ## Architecture
 
@@ -52,7 +52,7 @@ The API only returns cumulative all-time stats, so the pipeline snapshots each a
 ## Data
 
 - **37,435 artists** — 9,808 charted (seeded from Last.fm's top 10,000), 27,628 unranked (seeded via genre tags and the similarity graph)
-- **Weekly snapshots** from 2026-05-10 onward (stable population)
+- **Weekly snapshots** from 2026-05-10 onward (21.7k artists; expanded to 37.4k on 2026-08-09)
 - Artists are classified by `size_band` (listener-count buckets from `<10k` to `1M+`), not chart position
 
 ## Repository Layout
