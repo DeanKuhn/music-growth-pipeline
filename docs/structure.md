@@ -60,7 +60,8 @@ Only entries with something non-obvious about them.
 | `pipeline/snapshot_artists.py` | Anchors snapshot date to current week's Sunday (`week_anchor()`); `--date YYYY-MM-DD` pins it when resuming. |
 | `pipeline/generate_stats.py` | Writes `data/pipeline_stats.json` at **repo root** via `REPO_ROOT`. deanslist.dev depends on that path. |
 | `sql/schema.sql` | Idempotent, safe to re-run. `sql/migrations/` holds one-offs meaningless on a fresh DB. |
-| `dbt/models/api/` | Serving layer — narrow, pre-joined, pre-indexed tables. **Never query the marts from the API.** |
+| `pipeline/export_json.py` | Reads the `api_*` models and writes `web/data/` (per-artist files, search index, leaderboards, genres, cohort, health). Only reader of the API layer. |
+| `dbt/models/api/` | Serving layer — narrow, pre-joined, pre-indexed tables. **Never export from the marts.** |
 | `dbt/models/api/api_artist_timeseries.sql` | Series starts 2026-05-10 (`var('series_start_date')`). |
 | `dbt/macros/profanity.sql` | Reads `PROFANITY_PATTERN`. Provides `is_display_safe()` / `display_name()`; **fails build** if env var unset (override: `--vars 'allow_unfiltered_names: true'`). |
 | `dbt/models/intermediate/int_artist_base.sql` | Applies profanity macros once at source: emits `display_name` and `<id>-redacted` slug. |
@@ -70,15 +71,10 @@ Only entries with something non-obvious about them.
 | `dbt/models/api/api_cohort_weekly.sql` | Cohorts on `size_band`, never `tier`. Fixed panel — artists whose series starts at window's first week. |
 | `dbt/models/api/api_artist_search.sql` | Excludes unsafe artists. Index opclasses (`gin_trgm_ops`, `text_pattern_ops`) interpolated inside `columns` strings. |
 | `dbt/models/api/api_genres.sql` | Left-joins `genre_growth` onto `genre_stats`. Growth columns nullable (needs `weeks_tracked >= 6` and ≥50 artists). |
-| `web/src/lib/db.ts` | Exports `sql` (postgres.js) and `assertReadonlyRole()`. |
-| `web/src/lib/rate-limit.ts` | `withRateLimit()` wraps every route: `assertReadonlyRole()` first (fails closed), then `getLimiter()` (Upstash or in-memory fallback, fails open). |
-| `web/src/lib/queries.ts` | Single source of truth for all SQL. Neither pages nor routes inline queries. |
-| `web/src/lib/api.ts` | Server-only. Typed functions calling `queries.ts` + `coerceNumericStrings`. No self-fetch. |
-| `web/src/lib/api-types.ts` | Client-safe. Types, `ApiError`, `coerceNumericStrings`. Import from here in client components, not `api.ts`. |
-| `web/src/lib/validation.ts` | Frozen whitelists from dbt output. `limitSchema` uses `.optional().default()`, not `.catch()`. `searchQuerySchema` rejects `%`/`_`. |
-| `deploy.sh` | SSHes into Hetzner (`bibba@music.deanslist.dev`), pulls, builds, restarts systemd. `DEPLOY_HOST` overridable. |
-| `weekly_snapshot.sh` | Snapshot → dbt → generate_stats → git push → restart web. Crontab Sundays 9am UTC. Logs to `logs/`. |
+| `web/` | Static pages + `app.js` (shared helpers) + per-page `index.js`. No server; fetches `web/data/*.json`. `styles.css` is built from `input.css` — commit the rebuilt file. |
+| `deploy.sh` | SSHes into Hetzner (`bibba@music.deanslist.dev`) and `git pull --ff-only`. No build or restart — Caddy serves `web/` directly. `DEPLOY_HOST` overridable. |
+| `weekly_snapshot.sh` | Snapshot → dbt seed/run → generate_stats → export_json → push `pipeline_stats.json`. Crontab Sundays 9am UTC. Logs to `logs/`. |
 
 ## Where the work is
 
-The pipeline (ingestion, marts, analyses, weekly automation, Power BI) is complete. Web app Stages A, C, D, E are complete. Deployed on Hetzner behind Caddy. Next up: Stage B (ingestion scale-up). See `docs/webapp-implementation-plan.md` for full stage details.
+The pipeline (ingestion, marts, analyses, weekly automation, Power BI) is complete. The Next.js app was replaced by a static site on 2026-09-22 (Next.js preserved on the `legacy` branch); `docs/webapp-implementation-plan.md` is now history for Stages A–E. Next up: dbt model audit (drop mart/api models nothing reads) and re-verifying the size-quintile finding against the 21-week window.
