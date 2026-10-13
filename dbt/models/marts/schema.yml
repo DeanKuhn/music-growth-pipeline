@@ -19,6 +19,44 @@ models:
       - name: listener_pct_change
         description: Week-over-week percent change.
 
+  - name: artist_growth_panel
+    description: >
+      One row per artist with a snapshot in every week since panel_start_date.
+      Equal-window growth for cross-artist comparisons — use this, not
+      artist_growth_summary (see Issue #9 in docs/findings.md).
+    columns:
+      - name: artist_id
+        description: Primary key.
+        tests:
+          - unique
+          - not_null
+      - name: start_listeners
+        description: Listeners at window_start.
+        tests:
+          - not_null
+      - name: end_listeners
+        description: Listeners at window_end.
+        tests:
+          - not_null
+      - name: pct_growth
+        description: Total percent growth across the window.
+        tests:
+          - not_null
+      - name: size_quintile
+        description: ntile(5) on start_listeners, 1 (smallest) to 5.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: window_start
+        description: First snapshot date in the window.
+      - name: window_end
+        description: Latest snapshot date. Advances weekly.
+      - name: n_weeks
+        description: Snapshots in the window. Every row has all of them.
+
   - name: artist_growth_summary
     description: One row per artist. First-to-last listener growth over the listener_growth window.
     columns:

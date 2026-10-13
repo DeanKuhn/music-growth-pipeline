@@ -293,3 +293,37 @@ models:
           which counts the two partial pre-window dates too.
         tests:
           - not_null
+
+  - name: api_growth_by_quintile
+    description: >
+      Five rows, one per starting-listener quintile. Equal-window growth from
+      artist_growth_panel. Backs the size-quintile finding on the README,
+      how-it-works page, and pipeline_stats.json.
+    columns:
+      - name: size_quintile
+        description: 1 (smallest) to 5.
+        tests:
+          - unique
+          - not_null
+      - name: artist_count
+        description: Artists in the quintile. Roughly equal across rows.
+        tests:
+          - not_null
+      - name: band_min
+        description: Smallest start_listeners in the quintile.
+      - name: band_max
+        description: Largest start_listeners in the quintile.
+      - name: median_pct_growth
+        description: Median total percent growth across the window.
+        tests:
+          - not_null
+      - name: avg_pct_growth
+        description: Mean total percent growth. Pulled up by a small number of fast growers.
+      - name: p90_pct_growth
+        description: 90th-percentile growth. Measures the right tail.
+      - name: window_start
+        description: First snapshot date in the window (var panel_start_date).
+      - name: window_end
+        description: Latest snapshot date. Advances weekly.
+      - name: n_weeks
+        description: Snapshots in the window.
