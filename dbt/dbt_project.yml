@@ -14,6 +14,12 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
+vars:
+  # First weekly snapshot of the stable 21.7k population (per-artist series).
+  series_start_date: '2026-05-10'
+  # First week every current artist has; cross-artist growth comparisons start here.
+  panel_start_date: '2026-08-09'
+
 models:
   music_growth:
     staging:
