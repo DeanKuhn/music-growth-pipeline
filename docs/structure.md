@@ -70,7 +70,7 @@ Only entries with something non-obvious about them.
 | `dbt/models/api/api_pipeline_health.sql` | Freshness from `latest_snapshot_date`, not dbt run time. |
 | `dbt/models/api/api_cohort_weekly.sql` | Cohorts on `size_band`, never `tier`. Fixed panel — artists whose series starts at window's first week. |
 | `dbt/models/api/api_artist_search.sql` | Excludes unsafe artists. Index opclasses (`gin_trgm_ops`, `text_pattern_ops`) interpolated inside `columns` strings. |
-| `dbt/models/api/api_genres.sql` | Left-joins `genre_growth` onto `genre_stats`. Growth columns nullable (needs `weeks_tracked >= 6` and ≥50 artists). |
+| `dbt/models/api/api_genres.sql` | Left-joins `genre_growth` onto `genre_stats`. Growth columns nullable (needs ≥50 artists in `artist_growth_panel`). |
 | `web/` | Static pages + `app.js` (shared helpers) + per-page `index.js`. No server; fetches `web/data/*.json`. `styles.css` is built from `input.css` — commit the rebuilt file. |
 | `deploy.sh` | SSHes into Hetzner (`bibba@music.deanslist.dev`) and `git pull --ff-only`. No build or restart — Caddy serves `web/` directly. `DEPLOY_HOST` overridable. |
 | `weekly_snapshot.sh` | Snapshot → dbt seed/run → generate_stats → export_json → push `pipeline_stats.json`. Crontab Sundays 9am UTC. Logs to `logs/`. |
