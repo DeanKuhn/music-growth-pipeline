@@ -30,72 +30,28 @@
     <section class="mb-16">
       <h2 class="text-xl font-semibold mb-4">Architecture</h2>
       <div class="space-y-3">
-
         <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-sm text-gray-100 text-center">
-          Last.fm API <span class="text-gray-500 text-xs ml-2">read-only, key auth</span>
+          <img class="rounded-lg w-full h-auto" src="/img/architecture.svg" alt="Architecture diagram of .">
         </div>
-        <div class="text-center text-gray-500 text-xs">&darr; <span class="text-xs">Python snapshots</span></div>
+      </div>
+    </section>
 
+    <!-- Data model -->
+    <section class="mb-16">
+      <h2 class="text-xl font-semibold mb-4">Data model</h2>
+      <div class="space-y-3">
         <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-sm text-gray-100 text-center">
-          Postgres <span class="text-gray-500 text-xs ml-2">self-hosted on Hetzner</span>
+          <img class="rounded-lg w-full h-auto" src="/img/erd.svg" alt="ERD diagram of raw Postgres tables.">
         </div>
-        <div class="text-center text-gray-500 text-xs">&darr; <span class="text-xs">dbt staging + marts</span></div>
-
-        <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-sm text-gray-100 text-center">
-          Serving layer <span class="text-gray-500 text-xs ml-2">pre-joined api views</span>
-        </div>
-        <div class="text-center text-gray-500 text-xs">&darr; <span class="text-xs">Python export to JSON</span></div>
-
-        <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-sm text-gray-100 text-center">
-          Static site <span class="text-gray-500 text-xs ml-2">HTML · Tailwind · vanilla JS</span>
-        </div>
-
-        <p class="text-xs text-gray-500 mt-4">A crontab runs the pipeline every Sunday at 9 AM UTC.</p>
-
       </div>
     </section>
 
     <!-- dbt DAG -->
     <section class="mb-16">
       <h2 class="text-xl font-semibold mb-4">The dbt DAG</h2>
-      <p class="text-gray-400 mb-6">Staging views normalize raw tables. Marts do the analytical joins. The api layer is narrow, pre-joined, and pre-indexed — the app never queries marts directly.</p>
-
-      <div class="space-y-6 text-sm">
-        <div>
-          <h3 class="text-gray-300 font-medium mb-2">staging</h3>
-          <ul class="text-gray-400 space-y-1 ml-4">
-            <li><code class="text-gray-300">stg_artist_snapshots</code> — one row per artist per week</li>
-            <li><code class="text-gray-300">stg_weekly_charts</code> — chart page/rank</li>
-            <li><code class="text-gray-300">stg_genre_artists</code> — artist ↔ genre tag</li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 class="text-gray-300 font-medium mb-2">intermediate</h3>
-          <ul class="text-gray-400 space-y-1 ml-4">
-            <li><code class="text-gray-300">int_artist_base</code> — profanity filter applied once, at the source</li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 class="text-gray-300 font-medium mb-2">marts</h3>
-          <ul class="text-gray-400 space-y-1 ml-4">
-            <li><code class="text-gray-300">artist_growth_summary</code> — first/last listener counts, total growth</li>
-            <li><code class="text-gray-300">artist_chart_position</code> — chart page/rank stats, left-joined so uncharted artists still get a row</li>
-            <li><code class="text-gray-300">listener_growth</code> — week-over-week deltas</li>
-            <li><code class="text-gray-300">genre_stats</code> — per-genre aggregates</li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 class="text-gray-300 font-medium mb-2">api (serving layer)</h3>
-          <ul class="text-gray-400 space-y-1 ml-4">
-            <li><code class="text-gray-300">api_artist_profile</code> — one pre-joined row per artist</li>
-            <li><code class="text-gray-300">api_artist_timeseries</code> — listeners indexed to 100 at first observation</li>
-            <li><code class="text-gray-300">api_cohort_weekly</code> — precomputed median/p25/p75 per cohort per week</li>
-          </ul>
-        </div>
-      </div>
+      <p class="text-gray-400 mb-6">Full documentation and lineage graph:
+        <a href="/dbt-docs" class="text-sky-500 hover:text-gray-400">dbt docs</a>.
+      </p>
     </section>
 
     <!-- Lessons learned -->
