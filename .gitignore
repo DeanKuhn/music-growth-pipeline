@@ -8,4 +8,5 @@ logs/
 data/orphan_artists_backup.json
 docs/stage-b-plan.md
 docs/webapp-implementation-plan.md
+docs/diagrams/
 web/data
