@@ -3,16 +3,19 @@ version: 2
 models:
   - name: api_artist_timeseries
     description: >
-      One row per artist per complete weekly snapshot. Serving model for the
-      artist chart endpoint and the input to api_cohort_weekly. Partial
-      snapshot weeks are excluded — see the model for why.
+      One row per artist per weekly snapshot from series_start_date
+      (2026-05-10). Serving model for the artist chart endpoint and the input
+      to api_cohort_weekly. The two earlier dates had partial artist
+      populations and are excluded. week_number and listeners_indexed are
+      relative to each artist's own first snapshot, so late joiners start at
+      week 1 in August.
     columns:
       - name: artist_id
         description: FK to artists.
         tests:
           - not_null
       - name: snapshot_date
-        description: Week of observation. Only complete weeks appear here.
+        description: Week of observation, from series_start_date onward.
         tests:
           - not_null
       - name: week_number
@@ -68,8 +71,9 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['<10k', '10k-50k', '50k-100k', '100k-250k',
-                       '250k-500k', '500k-1M', '1M+']
+              arguments:
+                values: ['<10k', '10k-50k', '50k-100k', '100k-250k',
+                         '250k-500k', '500k-1M', '1M+']
       - name: genres
         description: text[] ordered by rank_in_genre. Empty array, never null.
         tests:
@@ -101,8 +105,9 @@ models:
           - unique
           - not_null
           - relationships:
-              to: ref('api_artist_profile')
-              field: slug
+              arguments:
+                to: ref('api_artist_profile')
+                field: slug
       - name: display_name
         description: >
           Always the real name here: unsafe artists are filtered out of this
@@ -135,7 +140,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['size_band', 'genre', 'all']
+              arguments:
+                values: ['size_band', 'genre', 'all']
       - name: cohort_key
         description: The band name, genre name, or the literal 'all'.
         tests:
@@ -181,8 +187,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('api_artist_profile')
-              field: artist_id
+              arguments:
+                to: ref('api_artist_profile')
+                field: artist_id
       - name: slug
         description: The neighbour's slug. Always resolves to a profile.
         tests:
@@ -215,8 +222,9 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['fastest_growing_pct', 'biggest_listener_gain',
-                       'most_listeners']
+              arguments:
+                values: ['fastest_growing_pct', 'biggest_listener_gain',
+                         'most_listeners']
       - name: slice_key
         description: The literal 'all', or a size_band value.
         tests:
@@ -233,8 +241,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('api_artist_profile')
-              field: slug
+              arguments:
+                to: ref('api_artist_profile')
+                field: slug
       - name: display_name
         tests:
           - not_null
