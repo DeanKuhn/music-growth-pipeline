@@ -13,8 +13,9 @@ seeds:
           - not_null
           - unique
           - relationships:
-              to: ref('stg_artists')
-              field: artist_id
+              arguments:
+                to: ref('stg_artists')
+                field: artist_id
       - name: reason
         tests:
           - not_null
