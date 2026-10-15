@@ -48,6 +48,8 @@ function renderTable() {
 
 async function init() {
 	allRows = await loadJSON("leaderboards.json");
+	// Leaderboard only admits artists with the max weeks_tracked, so any row has the window length.
+	document.getElementById("window-weeks").textContent = allRows[0].weeks_tracked;
 
 	document.getElementById("type-filter").addEventListener("change", renderTable);
 	document.getElementById("band-filter").addEventListener("change", renderTable);
