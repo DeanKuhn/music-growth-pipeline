@@ -22,7 +22,7 @@ set +a
 on_exit() {
   local code=$?
   tail -n 100 "$LOG_FILE" | 
-    curl -fsS -m 10 --retry 5 --data-binary @-"$HC_PING_URL/$code" > /dev/null || true
+    curl -fsS -m 10 --retry 5 --data-binary @- "$HC_PING_URL/$code" > /dev/null || true
 }
 trap on_exit EXIT
 curl -fsS -m 10 --retry 5 "$HC_PING_URL/start" > /dev/null || true
