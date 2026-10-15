@@ -18,6 +18,15 @@ set -a
 source .env
 set +a
 
+# healthchecks.io check-in after run
+on_exit() {
+  local code=$?
+  tail -n 100 "$LOG_FILE" | 
+    curl -fsS -m 10 --retry 5 --data-binary @-"$HC_PING_URL/$code" > /dev/null || true
+}
+trap on_exit EXIT
+curl -fsS -m 10 --retry 5 "$HC_PING_URL/start" > /dev/null || true
+
 # Compute snapshot date (anchored to current week's Sunday)
 SNAPSHOT_DATE=$(python3 -c "
 import sys; sys.path.insert(0, 'pipeline')
