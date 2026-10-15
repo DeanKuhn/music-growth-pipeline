@@ -31,16 +31,13 @@ stats = {}
 stats["generated_at"] = date.today().isoformat()
 
 # --- SUMMARY ---
-cur.execute("select count(*), max(weeks_tracked) from artist_growth_summary")
+cur.execute("select artists_total, weeks_in_series, latest_snapshot_date from api_pipeline_health")
 row = cur.fetchone()
 stats["summary"] = {
     "artist_count": row[0],
     "weeks_tracked": row[1],
+    "latest_snapshot": row[2],
 }
-
-cur.execute("select max(snapshot_date) from artist_snapshots")
-row = cur.fetchone()
-stats["summary"]["latest_snapshot"] = row[0]
 
 # --- GROWTH BY SIZE QUINTILE ---
 query = """
