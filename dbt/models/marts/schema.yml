@@ -1,29 +1,11 @@
 version: 2
 
 models:
-  - name: listener_growth
-    description: >
-      One row per artist per week with the change from the previous snapshot.
-      Drops the earliest global snapshot date.
-    columns:
-      - name: artist_id
-        description: FK to stg_artists.
-      - name: snapshot_date
-        description: Week of observation.
-      - name: listeners
-        description: Cumulative listeners this week.
-      - name: previous_listeners
-        description: Listeners at the artist's previous snapshot. Null in their first row.
-      - name: listener_delta
-        description: listeners - previous_listeners.
-      - name: listener_pct_change
-        description: Week-over-week percent change.
-
   - name: artist_growth_panel
     description: >
       One row per artist with a snapshot in every week since panel_start_date.
-      Equal-window growth for cross-artist comparisons — use this, not
-      artist_growth_summary (see Issue #9 in docs/findings.md).
+      Equal-window growth for cross-artist comparisons (see Issue #9 in
+      docs/findings.md).
     columns:
       - name: artist_id
         description: Primary key.
@@ -57,32 +39,6 @@ models:
       - name: n_weeks
         description: Snapshots in the window. Every row has all of them.
 
-  - name: artist_growth_summary
-    description: One row per artist. First-to-last listener growth over the listener_growth window.
-    columns:
-      - name: artist_id
-        description: Primary key.
-      - name: artist_name
-        description: Raw Last.fm name.
-      - name: size_band
-        description: From int_artist_base.
-      - name: size_band_sort
-        description: Sort key for size_band.
-      - name: min_page
-        description: Best (lowest) chart page. Null if never charted.
-      - name: starting_count
-        description: Listeners at the first observation in the window.
-      - name: ending_count
-        description: Listeners at the last observation in the window.
-      - name: total_listener_delta
-        description: ending_count - starting_count.
-      - name: total_pct_growth
-        description: Total percent growth across the window.
-      - name: average_listener_pct
-        description: Mean of weekly listener_pct_change.
-      - name: weeks_tracked
-        description: Weeks with a listener_growth row.
-
   - name: artist_chart_position
     description: One row per artist, left-joined so uncharted artists still appear.
     columns:
@@ -96,28 +52,6 @@ models:
         description: Best (lowest) chart page. Null if never charted.
       - name: global_rank
         description: Best overall position, (page - 1) * 5 + rank. Null if never charted.
-
-  - name: artist_similarity_network
-    description: >
-      Similarity pairs where both artists are in the database, tagged by whether
-      they share a size band.
-    columns:
-      - name: artist_id
-        description: Queried artist.
-      - name: artist_name
-        description: Queried artist's raw name.
-      - name: artist_size_band
-        description: Queried artist's size band.
-      - name: similar_artist_id
-        description: Similar artist.
-      - name: similar_name
-        description: Similar artist's name.
-      - name: similar_artist_size_band
-        description: Similar artist's size band.
-      - name: similarity_score
-        description: Last.fm match score, 0-1.
-      - name: pair_type
-        description: same_band or cross_band.
 
   - name: genre_stats
     description: One row per genre. Size and engagement at the latest snapshot.
@@ -152,21 +86,3 @@ models:
         description: Median pct_growth.
       - name: avg_listeners
         description: Mean end_listeners.
-
-  - name: weekly_growth_by_size_band
-    description: One row per size band per week. Summed listeners and week-over-week change.
-    columns:
-      - name: snapshot_date
-        description: Week of observation.
-      - name: size_band
-        description: From int_artist_base.
-      - name: total_listeners
-        description: Sum of listeners across the band.
-      - name: artist_count
-        description: Artists observed in the band this week.
-      - name: previous_total_listeners
-        description: total_listeners from the prior week.
-      - name: listener_delta
-        description: total_listeners - previous_total_listeners.
-      - name: listener_pct_change
-        description: Week-over-week percent change of the band total.

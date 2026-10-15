@@ -38,13 +38,13 @@ The first two snapshot dates are **not** weekly runs and must be excluded from a
 - `2026-05-03` — 4,487 artists, **disjoint** from 04-27; only artists seeded in between.
 - `2026-05-10` onward — first runs over a stable ~21.7k population.
 
-Known consequence: `listener_growth.sql` drops only the global min date, so the 7,751 artists with an 04-27 row get one 13-day delta labelled as a week at 05-10. Narrow (one week, one cohort); slightly affects `average_listener_pct`. Not fixed — changing it would move published numbers.
+Models bound their windows with `var('series_start_date')` (per-artist series) or `var('panel_start_date')` (cross-artist comparisons), never the global min date.
 
 ## Portfolio stats block
 
-`pipeline/generate_stats.py` publishes `growth_by_size_quintile` (median 2.67 / 2.46 / 2.10 / 1.76 / 1.71), computed inline against `stg_artist_snapshots` bounded at `SERIES_START_DATE = '2026-05-10'` so it reproduces the README exactly.
+`pipeline/generate_stats.py` publishes `growth_by_size_quintile` from `api_growth_by_quintile` and `top_growing_artists` from `artist_growth_panel`, both on the equal-window panel (Issue #9 in `docs/findings.md`). The README's 23-week figures come from the same panel with `--vars '{panel_start_date: 2026-05-10}'`.
 
-**Do not recompute from `artist_growth_summary`** — that mart's window yields 2.77 / 2.52 / …, numbers the README doesn't contain. The earlier `growth_by_tier` block contradicted the README and was removed 2026-08-05; see Issue #1 in `docs/findings.md`. `min_page` was dropped from `top_growing_artists` at the same time.
+The earlier `growth_by_tier` block contradicted the README and was removed 2026-08-05; see Issue #1 in `docs/findings.md`. `min_page` was dropped from `top_growing_artists` at the same time.
 
 ## File guide
 
