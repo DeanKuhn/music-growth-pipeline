@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-10-15",
+  "generated_at": "2026-10-18",
   "summary": {
     "artist_count": 37435,
-    "weeks_tracked": 23,
-    "latest_snapshot": "2026-10-11"
+    "weeks_tracked": 24,
+    "latest_snapshot": "2026-10-18"
   },
   "growth_by_size_quintile": [
     {
@@ -11,144 +11,144 @@
       "artist_count": 7486,
       "band_min": 1,
       "band_max": 28736,
-      "avg_pct_growth": 1.59,
-      "median_pct_growth": 0.77,
-      "p90_pct_growth": 3.36,
+      "avg_pct_growth": 1.78,
+      "median_pct_growth": 0.86,
+      "p90_pct_growth": 3.76,
       "window_start": "2026-08-09",
-      "window_end": "2026-10-11"
+      "window_end": "2026-10-18"
     },
     {
       "quintile": 2,
       "artist_count": 7486,
       "band_min": 28736,
       "band_max": 69416,
-      "avg_pct_growth": 1.26,
-      "median_pct_growth": 0.66,
-      "p90_pct_growth": 2.91,
+      "avg_pct_growth": 1.42,
+      "median_pct_growth": 0.74,
+      "p90_pct_growth": 3.28,
       "window_start": "2026-08-09",
-      "window_end": "2026-10-11"
+      "window_end": "2026-10-18"
     },
     {
       "quintile": 3,
       "artist_count": 7486,
       "band_min": 69417,
       "band_max": 139879,
-      "avg_pct_growth": 1.11,
-      "median_pct_growth": 0.61,
-      "p90_pct_growth": 2.57,
+      "avg_pct_growth": 1.24,
+      "median_pct_growth": 0.69,
+      "p90_pct_growth": 2.89,
       "window_start": "2026-08-09",
-      "window_end": "2026-10-11"
+      "window_end": "2026-10-18"
     },
     {
       "quintile": 4,
       "artist_count": 7486,
       "band_min": 139892,
       "band_max": 299430,
-      "avg_pct_growth": 0.93,
-      "median_pct_growth": 0.59,
-      "p90_pct_growth": 2.02,
+      "avg_pct_growth": 1.04,
+      "median_pct_growth": 0.66,
+      "p90_pct_growth": 2.26,
       "window_start": "2026-08-09",
-      "window_end": "2026-10-11"
+      "window_end": "2026-10-18"
     },
     {
       "quintile": 5,
       "artist_count": 7486,
       "band_min": 299487,
       "band_max": 9252726,
-      "avg_pct_growth": 0.8,
-      "median_pct_growth": 0.59,
-      "p90_pct_growth": 1.6,
+      "avg_pct_growth": 0.9,
+      "median_pct_growth": 0.66,
+      "p90_pct_growth": 1.79,
       "window_start": "2026-08-09",
-      "window_end": "2026-10-11"
+      "window_end": "2026-10-18"
     }
   ],
   "top_growing_artists": [
     {
       "artist_name": "Ear Pwr",
       "starting_count": 9453,
-      "ending_count": 26740,
-      "total_pct_growth": 182.87
+      "ending_count": 30087,
+      "total_pct_growth": 218.28
     },
     {
       "artist_name": "Cyst",
       "starting_count": 7870,
-      "ending_count": 12479,
-      "total_pct_growth": 58.56
+      "ending_count": 12764,
+      "total_pct_growth": 62.19
     },
     {
       "artist_name": "Descending",
       "starting_count": 10500,
-      "ending_count": 15911,
-      "total_pct_growth": 51.53
+      "ending_count": 16407,
+      "total_pct_growth": 56.26
     },
     {
       "artist_name": "Eleanor",
       "starting_count": 5604,
-      "ending_count": 7866,
-      "total_pct_growth": 40.36
-    },
-    {
-      "artist_name": "Trooper Salute",
-      "starting_count": 25936,
-      "ending_count": 35923,
-      "total_pct_growth": 38.51
+      "ending_count": 8166,
+      "total_pct_growth": 45.72
     },
     {
       "artist_name": "Mollie Elizabeth",
       "starting_count": 85347,
-      "ending_count": 117926,
-      "total_pct_growth": 38.17
+      "ending_count": 124060,
+      "total_pct_growth": 45.36
     },
     {
-      "artist_name": "Fat Papi",
-      "starting_count": 68097,
-      "ending_count": 90323,
-      "total_pct_growth": 32.64
-    },
-    {
-      "artist_name": "Alyssa Grace",
-      "starting_count": 77215,
-      "ending_count": 102374,
-      "total_pct_growth": 32.58
+      "artist_name": "Trooper Salute",
+      "starting_count": 25936,
+      "ending_count": 36924,
+      "total_pct_growth": 42.37
     },
     {
       "artist_name": "Villian",
       "starting_count": 7078,
-      "ending_count": 9383,
-      "total_pct_growth": 32.57
+      "ending_count": 9655,
+      "total_pct_growth": 36.41
     },
     {
       "artist_name": "MThu",
       "starting_count": 64229,
-      "ending_count": 84951,
-      "total_pct_growth": 32.26
+      "ending_count": 87600,
+      "total_pct_growth": 36.39
+    },
+    {
+      "artist_name": "Alyssa Grace",
+      "starting_count": 77215,
+      "ending_count": 105273,
+      "total_pct_growth": 36.34
+    },
+    {
+      "artist_name": "Fat Papi",
+      "starting_count": 68097,
+      "ending_count": 92297,
+      "total_pct_growth": 35.54
     }
   ],
   "genre_growth": [
     {
       "genre": "japanese",
       "artist_count": 500,
-      "median_total_pct_growth": 1.22
-    },
-    {
-      "genre": "screamo",
-      "artist_count": 500,
-      "median_total_pct_growth": 1.0
+      "median_total_pct_growth": 1.36
     },
     {
       "genre": "emo",
       "artist_count": 499,
-      "median_total_pct_growth": 0.99
+      "median_total_pct_growth": 1.11
+    },
+    {
+      "genre": "screamo",
+      "artist_count": 500,
+      "median_total_pct_growth": 1.11
     },
     {
       "genre": "black metal",
       "artist_count": 500,
-      "median_total_pct_growth": 0.98
+      "median_total_pct_growth": 1.09
     },
     {
       "genre": "j-pop",
       "artist_count": 499,
-      "median_total_pct_growth": 0.95
+      "median_total_pct_growth": 1.06
     }
   ]
 }
