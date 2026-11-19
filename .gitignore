@@ -1,4 +1,5 @@
 .env
+.claude/
 pytest.ini
 __pycache__/
 target/
